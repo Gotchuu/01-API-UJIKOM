@@ -128,4 +128,17 @@ app()->instance('skip_alat_log', false);
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
+
+    public function dashboard()
+    {
+        $menunggu = Peminjaman::where('status', 'diajukan')->count();
+        $dipinjam = Peminjaman::where('status', 'dipinjam')->count();
+        $telat = Peminjaman::where('status', 'telat')->count();
+        $kembaliHariIni = Pengembalian::whereDate('created_at', Carbon::today())->count();
+        $totalAlat = Alat::count();
+        $stokMenipis = Alat::where('stok', '<=', 3)->count();
+        $recent = Peminjaman::with(['user','detailPinjams.alat'])->latest()->take(5)->get();
+
+        return view('petugas.dashboard', compact('menunggu','dipinjam','telat','kembaliHariIni','totalAlat','stokMenipis','recent'));
+    }
 }
