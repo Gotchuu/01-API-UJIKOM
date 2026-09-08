@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Peminjaman;
 use App\Models\Pengembalian;
 use App\Models\Alat;
+use App\Models\PesanPerbaikan;
 use Illuminate\Http\Request;
 use App\Http\Requests\Pengembalian\StorePengembalianRequest;
 use Carbon\Carbon;
