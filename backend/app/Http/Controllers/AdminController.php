@@ -551,4 +551,39 @@ public function updateStatusPeminjaman(Request $request, $id)
             return redirect()->back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
         }
     }
+
+    public function indexPesan() {
+    $pesans = PesanPerbaikan::with(['pengembalian.peminjaman.user','petugas','admin'])->latest()->paginate(10);
+    return view('admin.pesan.index', compact('pesans'));
+    }
+    public function updatePesan(Request $request, $id) {
+    $request->validate([
+        'aksi' => 'required|in:benarkan,batal',
+        'admin_catatan' => 'required|string|min:5|max:500',
+    ]);
+    
+    $pesan = PesanPerbaikan::findOrFail($id);
+    
+    if ($request->aksi === 'benarkan') {
+        
+    // pakai logika hapus yang sudah ada
+        $pengembalian = $pesan->pengembalian;
+        if ($pengembalian) {
+            $peminjaman = $pengembalian->peminjaman;
+            
+            \DB::transaction(function() use ($pengembalian, $peminjaman) {
+                if ($peminjaman) { $peminjaman->update(['status'=>'dipinjam']); foreach($peminjaman->detailPinjams as $d){ $a=\App\Models\Alat::find($d->alat_id); if($a) $a->decrement('stok', $d->jumlah); } }
+                $pengembalian->delete();
+            });
+        }
+        
+        $pesan->update(['status'=>'selesai','admin_id'=>auth()->id(),'admin_catatan'=>$request->admin_catatan]);
+        return back()->with('success','Laporan dibenarkan: pengembalian dihapus & status balik dipinjam.');
+        } 
+        else 
+        {
+        $pesan->update(['status'=>'dibaca','admin_id'=>auth()->id(),'admin_catatan'=>$request->admin_catatan]);
+        return back()->with('success','Laporan dibatalkan.');
+        }
+    }
     }
