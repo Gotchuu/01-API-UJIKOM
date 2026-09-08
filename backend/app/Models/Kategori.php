@@ -8,9 +8,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany; // berfungsi untuk mengimpor
 class Kategori extends Model
 {
     protected $table = 'kategori';
+
     protected $fillable = ['nama_kategori'];
 
-    public function alat(): HasMany {
+    public function alat(): HasMany
+    {
         return $this->hasMany(Alat::class);
     }
 }

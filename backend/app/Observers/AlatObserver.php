@@ -4,8 +4,8 @@ namespace App\Observers;
 
 use App\Models\Alat;
 use App\Models\LogAktivitas;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
+use Illuminate\Support\Facades\Auth;
 
 class AlatObserver implements ShouldHandleEventsAfterCommit
 {
@@ -26,7 +26,7 @@ class AlatObserver implements ShouldHandleEventsAfterCommit
         $this->catatLog("Menambahkan master data alat baru: {$alat->nama_alat} (ID: {$alat->id})");
     }
 
-        public function updated(Alat $alat): void
+    public function updated(Alat $alat): void
     {
         $changes = $alat->getChanges();
         unset($changes['updated_at'], $changes['created_at']);
@@ -52,8 +52,12 @@ class AlatObserver implements ShouldHandleEventsAfterCommit
             $oldValue = $alat->getOriginal($field);
             $old = $oldValue ?? 'kosong';
             $new = $newValue ?? 'kosong';
-            if (is_string($old) && strlen($old) > 50) $old = substr($old, 0, 50) . '...';
-            if (is_string($new) && strlen($new) > 50) $new = substr($new, 0, 50) . '...';
+            if (is_string($old) && strlen($old) > 50) {
+                $old = substr($old, 0, 50).'...';
+            }
+            if (is_string($new) && strlen($new) > 50) {
+                $new = substr($new, 0, 50).'...';
+            }
             $details[] = "{$field}: '{$old}' -> '{$new}'";
         }
 

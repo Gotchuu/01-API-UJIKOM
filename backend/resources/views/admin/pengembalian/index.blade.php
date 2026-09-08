@@ -6,6 +6,16 @@
 @section('content')
     <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
         <div class="p-5 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
+            @php 
+            $jmlLaporan = \App\Models\PesanPerbaikan::where('status','terkirim')->count(); 
+            @endphp
+            @if($jmlLaporan > 0)
+
+        <div class="mb-4 bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-lg flex justify-between items-center">
+    <div>⚠️ Ada <b>{{ $jmlLaporan }} laporan perbaikan</b> dari petugas perlu ditindak</div>
+    <a href="{{ route('admin.pesan.index') }}" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded text-sm">Lihat Daftar →</a>
+    </div>
+    @endif
             <h3 class="text-lg font-bold text-gray-800">Daftar Pengembalian Alat</h3>
 
             <form action="{{ route('admin.pengembalian.index') }}" method="GET" class="flex w-full md:w-80">

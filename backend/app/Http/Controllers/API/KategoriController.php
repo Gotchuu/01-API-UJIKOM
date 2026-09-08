@@ -9,21 +9,20 @@ use App\Http\Resources\KategoriResource;
 use App\Models\Kategori;
 use Illuminate\Http\JsonResponse;
 
-
 class KategoriController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-     public function index(): JsonResponse //untuk looping
+    public function index(): JsonResponse // untuk looping
     {
         $kategori = Kategori::latest()->get();
+
         return response()->json([
             'message' => 'Daftar kategori berhasil diambil.',
-            'data' => KategoriResource::collection($kategori)
+            'data' => KategoriResource::collection($kategori),
         ]);
     }
-
 
     /**
      * Store a newly created resource in storage.
@@ -31,9 +30,10 @@ class KategoriController extends Controller
     public function store(StoreKategoriRequest $request): JsonResponse
     {
         $kategori = Kategori::create($request->validated());
+
         return response()->json([
             'message' => 'Kategori berhasil ditambahkan.',
-            'data' => new KategoriResource($kategori)
+            'data' => new KategoriResource($kategori),
         ], 201);
     }
 
@@ -43,21 +43,20 @@ class KategoriController extends Controller
     public function show(Kategori $kategori): JsonResponse
     {
         return response()->json([
-        'data' => new KategoriResource($kategori)
-    ]);
+            'data' => new KategoriResource($kategori),
+        ]);
     }
-
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateKategoriRequest $request, Kategori
-$kategori): JsonResponse
+    public function update(UpdateKategoriRequest $request, Kategori $kategori): JsonResponse
     {
         $kategori->update($request->validated());
+
         return response()->json([
             'message' => 'Kategori berhasil diperbarui.',
-            'data' => new KategoriResource($kategori)
+            'data' => new KategoriResource($kategori),
         ]);
     }
 
@@ -67,17 +66,18 @@ $kategori): JsonResponse
     public function destroy(Kategori $kategori): JsonResponse
     {
         $kategori->delete();
-        return response()->json([
-        'message' => 'Kategori berhasil dihapus.'
-    ]);
-    }
-    
-    public function katalog(): JsonResponse
-{
-    $kategori = Kategori::with('alat')->get();
 
-    return response()->json([
-        'data' => $kategori,
-    ]);
-}
+        return response()->json([
+            'message' => 'Kategori berhasil dihapus.',
+        ]);
+    }
+
+    public function katalog(): JsonResponse
+    {
+        $kategori = Kategori::with('alat')->get();
+
+        return response()->json([
+            'data' => $kategori,
+        ]);
+    }
 }

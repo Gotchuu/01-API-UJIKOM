@@ -11,11 +11,11 @@ return new class extends Migration
         Schema::table('log_aktivitas', function (Blueprint $table) {
             $table->dropForeign(['user_id']);
         });
-        
+
         Schema::table('log_aktivitas', function (Blueprint $table) {
             $table->unsignedBigInteger('user_id')->nullable()->change();
         });
-        
+
         Schema::table('log_aktivitas', function (Blueprint $table) {
             $table->foreign('user_id')->references('id')->on('users')->nullOnDelete();
         });
@@ -26,11 +26,11 @@ return new class extends Migration
         Schema::table('log_aktivitas', function (Blueprint $table) {
             $table->dropForeign(['user_id']);
         });
-        
+
         Schema::table('log_aktivitas', function (Blueprint $table) {
             $table->unsignedBigInteger('user_id')->nullable(false)->change();
         });
-        
+
         Schema::table('log_aktivitas', function (Blueprint $table) {
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
         });

@@ -2,8 +2,8 @@
 
 namespace App\Observers;
 
-use App\Models\Peminjaman;
 use App\Models\LogAktivitas;
+use App\Models\Peminjaman;
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
 
 class PeminjamanObserver implements ShouldHandleEventsAfterCommit
@@ -12,8 +12,8 @@ class PeminjamanObserver implements ShouldHandleEventsAfterCommit
     public function created(Peminjaman $peminjaman): void
     {
         LogAktivitas::create([
-            'user_id'   => auth()->id() ?? $peminjaman->user_id,
-            'aktivitas' => "Mengajukan peminjaman alat baru (ID: #{$peminjaman->id})."
+            'user_id' => auth()->id() ?? $peminjaman->user_id,
+            'aktivitas' => "Mengajukan peminjaman alat baru (ID: #{$peminjaman->id}).",
         ]);
     }
 
@@ -26,7 +26,7 @@ class PeminjamanObserver implements ShouldHandleEventsAfterCommit
             $statusBaru = $peminjaman->status;
 
             LogAktivitas::create([
-                'user_id'   => auth()->id() ?? $peminjaman->user_id,
+                'user_id' => auth()->id() ?? $peminjaman->user_id,
                 'aktivitas' => "Mengubah status peminjaman ID: #{$peminjaman->id} dari '{$statusLama}' menjadi '{$statusBaru}'.",
             ]);
         }

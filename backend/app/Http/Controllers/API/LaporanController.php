@@ -16,15 +16,15 @@ class LaporanController extends Controller
         // 1. Validasi Input Parameter
         $validator = Validator::make($request->all(), [
             'start_date' => ['nullable', 'date', 'date_format:Y-m-d'],
-            'end_date'   => ['nullable', 'date', 'date_format:Y-m-d', 'after_or_equal:start_date'],
-            'status'     => ['nullable', 'string', 'in:diajukan,dipinjam,dikembangkan,telat'],
-            'per_page'   => ['nullable', 'integer', 'min:1', 'max:100'],
+            'end_date' => ['nullable', 'date', 'date_format:Y-m-d', 'after_or_equal:start_date'],
+            'status' => ['nullable', 'string', 'in:diajukan,dipinjam,dikembangkan,telat'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Parameter filter tidak valid.',
-                'errors'  => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -48,7 +48,7 @@ class LaporanController extends Controller
         // API Resource khusus untuk instance Paginate
         return PeminjamanResource::collection($laporan)
             ->additional([
-                'message' => 'Laporan peminjaman berhasil ditarik.'
+                'message' => 'Laporan peminjaman berhasil ditarik.',
             ])
             ->response();
     }

@@ -1,9 +1,11 @@
 <?php
+
 namespace App\Observers;
-use App\Models\User;
+
 use App\Models\LogAktivitas;
-use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
+use Illuminate\Support\Facades\Auth;
 
 class UserObserver implements ShouldHandleEventsAfterCommit
 {
@@ -14,21 +16,26 @@ class UserObserver implements ShouldHandleEventsAfterCommit
             LogAktivitas::create(['user_id' => $userId, 'aktivitas' => $pesan]);
         }
     }
+
     public function created(User $user): void
     {
         $this->catatLog("Menambahkan user baru: {$user->name} ({$user->role}) (ID: {$user->id})");
     }
+
     public function updated(User $user): void
     {
-        if (!$user->wasChanged(['name','email','role'])) return;
+        if (! $user->wasChanged(['name', 'email', 'role'])) {
+            return;
+        }
         $changes = [];
-        foreach (['name','email','role'] as $field) {
+        foreach (['name', 'email', 'role'] as $field) {
             if ($user->wasChanged($field)) {
                 $changes[] = "$field: '{$user->getOriginal($field)}' -> '{$user->$field}'";
             }
         }
-        $this->catatLog("Memperbarui user ID: {$user->id} - " . implode(', ', $changes));
+        $this->catatLog("Memperbarui user ID: {$user->id} - ".implode(', ', $changes));
     }
+
     public function deleted(User $user): void
     {
         $this->catatLog("Menghapus user: {$user->name} ({$user->role}) (ID: {$user->id})");

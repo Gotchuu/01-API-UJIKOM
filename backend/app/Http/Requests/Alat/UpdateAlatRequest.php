@@ -26,22 +26,22 @@ class UpdateAlatRequest extends FormRequest
 
         return [
             // Memastikan kategori_id wajib diisi, bertipe integer, dan ID-nya ada di tabel 'kategori'
-            'kategori_id'    => ['required', 'integer', Rule::exists('kategori', 'id')],
-            
+            'kategori_id' => ['required', 'integer', Rule::exists('kategori', 'id')],
+
             // Nama alat wajib berupa teks dan maksimal 255 karakter
-            'nama_alat'      => ['required', 'string', 'max:255'],
-            
+            'nama_alat' => ['required', 'string', 'max:255'],
+
             // Stok wajib bertipe angka bulat dan tidak boleh bernilai negatif (minimal 0)
-            'stok'           => ['required', 'integer', 'min:0'],
-            
+            'stok' => ['required', 'integer', 'min:0'],
+
             // Status kondisi (misal: 'Baik', 'Rusak') wajib berupa teks maksimal 255 karakter
             'status_kondisi' => ['required', 'string', 'max:255'],
-            
+
             // Deskripsi bersifat opsional (boleh kosong), jika diisi harus berupa teks
-            'deskripsi'      => ['nullable', 'string'],
-            
+            'deskripsi' => ['nullable', 'string'],
+
             // Gambar opsional, namun jika diunggah harus berupa file gambar (jpeg, png, jpg) maks 2MB (2048 KB)
-            'gambar'         => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            'gambar' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
         ];
     }
 }

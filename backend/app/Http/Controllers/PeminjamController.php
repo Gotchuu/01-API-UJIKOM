@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Alat;
-use App\Models\Peminjaman;
 use App\Models\DetailPinjam;
+use App\Models\Peminjaman;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -14,6 +14,7 @@ class PeminjamController extends Controller
     public function katalogAlat()
     {
         $alats = Alat::with('kategori')->where('stok', '>', 0)->get();
+
         return view('peminjam.katalog', compact('alats'));
     }
 
@@ -45,10 +46,12 @@ class PeminjamController extends Controller
             }
 
             DB::commit();
+
             return redirect()->route('peminjam.riwayat')->with('success', 'Pengajuan peminjaman berhasil dikirim.');
         } catch (Exception $e) {
             DB::rollback();
-            return redirect()->back()->with('error', 'Gagal mengajukan peminjaman: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Gagal mengajukan peminjaman: '.$e->getMessage());
         }
     }
 

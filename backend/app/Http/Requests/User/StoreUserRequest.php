@@ -3,8 +3,8 @@
 namespace App\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class StoreUserRequest extends FormRequest
 {
@@ -18,20 +18,20 @@ class StoreUserRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
-                'required', 
-                'string', 
-                'email', 
+                'required',
+                'string',
+                'email',
                 'max:255',
-                Rule::unique('users', 'email') // Menggunakan class Rule agar lebih clean
+                Rule::unique('users', 'email'), // Menggunakan class Rule agar lebih clean
             ],
             'password' => [
-                'required', 
+                'required',
                 'string',
-                Password::min(8)->letters()->numbers()
+                Password::min(8)->letters()->numbers(),
             ],
             'role' => [
                 'required',
-                Rule::in(['admin', 'petugas', 'peminjam']) // Input hanya boleh dari opsi ini
+                Rule::in(['admin', 'petugas', 'peminjam']), // Input hanya boleh dari opsi ini
             ],
             'no_hp' => ['nullable', 'string', 'max:15'],
             'alamat' => ['nullable', 'string'],

@@ -12,14 +12,14 @@ class PengembalianSeeder extends Seeder
      */
     public function run(): void
     {
-            $pengembalian = [
-                [
-                    'peminjaman_id' => 1,
-                    'tgl_kembali' => '2026-06-04',
-                    'kondisi_kembali' => 'Lengkap dan Berfungsi Baik',
-                    'denda' => 0,
-                    'petugas_id' => 2, // Arif (Petugas)
-                ],
+        $pengembalian = [
+            [
+                'peminjaman_id' => 1,
+                'tgl_kembali' => '2026-06-04',
+                'kondisi_kembali' => 'Lengkap dan Berfungsi Baik',
+                'denda' => 0,
+                'petugas_id' => 2, // Arif (Petugas)
+            ],
             [
                 'peminjaman_id' => 2,
                 'tgl_kembali' => '2026-06-05',

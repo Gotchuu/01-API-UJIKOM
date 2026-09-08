@@ -15,20 +15,20 @@ class StorePengembalianRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'peminjaman_id'   => ['required', 'integer', Rule::exists('peminjaman', 'id')],
-            'tgl_kembali'     => ['required', 'date'],
+            'peminjaman_id' => ['required', 'integer', Rule::exists('peminjaman', 'id')],
+            'tgl_kembali' => ['required', 'date'],
             'kondisi_kembali' => ['required', 'string', 'max:255'],
-            'denda_kondisi'   => ['nullable', 'integer', 'min:0'],
+            'denda_kondisi' => ['nullable', 'integer', 'min:0'],
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'peminjaman_id'   => 'ID Peminjaman',
-            'tgl_kembali'     => 'Tanggal Pengembalian',
+            'peminjaman_id' => 'ID Peminjaman',
+            'tgl_kembali' => 'Tanggal Pengembalian',
             'kondisi_kembali' => 'Kondisi barang kembali',
-            'denda_kondisi'   => 'Denda kondisi alat',
+            'denda_kondisi' => 'Denda kondisi alat',
         ];
     }
 }

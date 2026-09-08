@@ -1,14 +1,14 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\API\AlatController;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\KategoriController;
-use App\Http\Controllers\API\AlatController;
-use App\Http\Controllers\API\UserController;
+use App\Http\Controllers\API\LaporanController;
+use App\Http\Controllers\API\LogAktivitasController;
 use App\Http\Controllers\API\PeminjamanController;
 use App\Http\Controllers\API\PengembalianController;
-use App\Http\Controllers\API\LogAktivitasController;
-use App\Http\Controllers\API\LaporanController;
+use App\Http\Controllers\API\UserController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,11 +34,11 @@ Route::middleware('auth:sanctum')->group(function () {
         // apiResource otomatis menyediakan route CRUD (index, store, show, update, destroy) untuk Kategori
         Route::apiResource('kategori', KategoriController::class);
         Route::apiResource('alat', AlatController::class);
-       
+
         Route::get('/katalog', [KategoriController::class, 'katalog']);
-       
+
         Route::apiResource('users', UserController::class);
-       
+
         Route::get('/peminjaman', [PeminjamanController::class, 'index']);
         Route::get('/peminjaman/{peminjaman}', [PeminjamanController::class, 'show']);
         Route::post('/peminjaman/{peminjaman}/approve', [PeminjamanController::class, 'approve']);

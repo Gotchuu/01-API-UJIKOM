@@ -23,7 +23,7 @@ class AlatController extends Controller
 
         return response()->json([
             'message' => 'Daftar alat berhasil diambil.',
-            'data'    => AlatResource::collection($alat)
+            'data' => AlatResource::collection($alat),
         ]);
     }
 
@@ -41,12 +41,13 @@ class AlatController extends Controller
                 // Simpan gambar ke direktori storage/app/public/alat
                 $data['gambar'] = $request->file('gambar')->store('alat', 'public');
             }
+
             return Alat::create($data);
         });
 
         return response()->json([
             'message' => 'Alat berhasil ditambahkan.',
-            'data'    => new AlatResource($alat->load('kategori'))
+            'data' => new AlatResource($alat->load('kategori')),
         ], 201); // Status code 201 Created
     }
 
@@ -57,7 +58,7 @@ class AlatController extends Controller
     {
         // Menggunakan Route Model Binding ($alat) dan memuat relasi kategori
         return response()->json([
-            'data' => new AlatResource($alat->load('kategori'))
+            'data' => new AlatResource($alat->load('kategori')),
         ]);
     }
 
@@ -84,7 +85,7 @@ class AlatController extends Controller
 
         return response()->json([
             'message' => 'Alat berhasil diperbarui.',
-            'data'    => new AlatResource($alat->load('kategori'))
+            'data' => new AlatResource($alat->load('kategori')),
         ]);
     }
 
@@ -102,7 +103,7 @@ class AlatController extends Controller
         });
 
         return response()->json([
-            'message' => 'Alat berhasil dihapus.'
+            'message' => 'Alat berhasil dihapus.',
         ]);
     }
 
@@ -116,7 +117,7 @@ class AlatController extends Controller
 
         return response()->json([
             'message' => 'Katalog alat tersedia.',
-            'data'    => AlatResource::collection($alat)
+            'data' => AlatResource::collection($alat),
         ]);
     }
 }

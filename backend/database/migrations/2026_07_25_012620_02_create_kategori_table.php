@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        schema::create('kategori', function (Blueprint $table){
+        Schema::create('kategori', function (Blueprint $table) {
             $table->id();
             $table->string('nama_kategori');
             $table->timestamps();
@@ -21,7 +21,8 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
-    public function down(): void {
-        schema::dropIfExists('kategori');
+    public function down(): void
+    {
+        Schema::dropIfExists('kategori');
     }
 };

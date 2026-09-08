@@ -22,27 +22,27 @@ class AuthController extends Controller
         try {
             $user = DB::transaction(function () use ($request) {
                 return User::create([
-                    'name'     => $request->name,
-                    'email'    => $request->email,
+                    'name' => $request->name,
+                    'email' => $request->email,
                     'password' => Hash::make($request->password),
-                    'role'     => 'peminjam',
-                    'no_hp'    => $request->no_hp,
-                    'alamat'   => $request->alamat,
+                    'role' => 'peminjam',
+                    'no_hp' => $request->no_hp,
+                    'alamat' => $request->alamat,
                 ]);
             });
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
-            'message' => 'Registrasi berhasil.',
-            'access_token' => $token,
-            'token_type' => 'Bearer'
-        ], 201);
-        
+                'message' => 'Registrasi berhasil.',
+                'access_token' => $token,
+                'token_type' => 'Bearer',
+            ], 201);
+
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Terjadi kesalahan saat registrasi.',
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -54,7 +54,7 @@ class AuthController extends Controller
     {
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (! $user || ! Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'email' => [
                     'Kredensial yang diberikan tidak cocok dengan data kami.',
@@ -65,10 +65,10 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'message'      => 'Login berhasil.',
-            'data'         => new UserResource($user),
+            'message' => 'Login berhasil.',
+            'data' => new UserResource($user),
             'access_token' => $token,
-            'token_type'   => 'Bearer',
+            'token_type' => 'Bearer',
         ]);
     }
 
@@ -79,7 +79,7 @@ class AuthController extends Controller
     {
         return response()->json([
             'message' => 'Data profil berhasil diambil.',
-            'data'    => new UserResource(auth()->user()),
+            'data' => new UserResource(auth()->user()),
         ]);
     }
 

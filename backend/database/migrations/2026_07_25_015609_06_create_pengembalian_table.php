@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        schema::create('pengembalian', function (Blueprint $table){
+        Schema::create('pengembalian', function (Blueprint $table) {
             $table->id();
             $table->foreignId('peminjaman_id')->constrained('peminjaman')->cascadeOnDelete();
             $table->date('tgl_kembali');
@@ -25,7 +25,8 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
-    public function down(): void {
-        schema::dropIfExists('pengembalian');
+    public function down(): void
+    {
+        Schema::dropIfExists('pengembalian');
     }
 };

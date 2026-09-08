@@ -20,7 +20,7 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'Daftar pengguna berhasil diambil.',
-            'data' => UserResource::collection($users)
+            'data' => UserResource::collection($users),
         ]);
     }
 
@@ -40,14 +40,14 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'Pengguna berhasil ditambahkan.',
-            'data' => new UserResource($user)
+            'data' => new UserResource($user),
         ], 201);
     }
 
     public function show(User $user): JsonResponse
     {
         return response()->json([
-            'data' => new UserResource($user)
+            'data' => new UserResource($user),
         ]);
     }
 
@@ -74,7 +74,7 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'Data pengguna berhasil diperbarui.',
-            'data' => new UserResource($user)
+            'data' => new UserResource($user),
         ]);
     }
 
@@ -89,7 +89,7 @@ class UserController extends Controller
         });
 
         return response()->json([
-            'message' => 'Pengguna berhasil dihapus.'
+            'message' => 'Pengguna berhasil dihapus.',
         ]);
     }
 }

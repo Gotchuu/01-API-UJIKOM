@@ -2,8 +2,9 @@
 
 namespace App\Observers;
 
-use App\Models\Pengembalian;
 use App\Models\LogAktivitas;
+use App\Models\Pengembalian;
+use Carbon\Carbon;
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
 
 class PengembalianObserver implements ShouldHandleEventsAfterCommit
@@ -15,11 +16,11 @@ class PengembalianObserver implements ShouldHandleEventsAfterCommit
     {
         LogAktivitas::create([
             'user_id' => auth()->id() ?? $pengembalian->petugas_id,
-            'aktivitas' => "Memproses pengembalian peminjaman ID: #{$pengembalian->peminjaman_id} dengan status kondisi: {$pengembalian->kondisi_kembali}."
+            'aktivitas' => "Memproses pengembalian peminjaman ID: #{$pengembalian->peminjaman_id} dengan status kondisi: {$pengembalian->kondisi_kembali}.",
         ]);
     }
 
-        /**
+    /**
      * Hanya log kalau ada perubahan penting (kondisi/denda/tgl_kembali)
      */
     public function updated(Pengembalian $pengembalian): void
@@ -31,7 +32,7 @@ class PengembalianObserver implements ShouldHandleEventsAfterCommit
             return;
         }
 
-        if (!$pengembalian->wasChanged(['kondisi_kembali', 'denda', 'tgl_kembali'])) {
+        if (! $pengembalian->wasChanged(['kondisi_kembali', 'denda', 'tgl_kembali'])) {
             return;
         }
 
@@ -48,7 +49,7 @@ class PengembalianObserver implements ShouldHandleEventsAfterCommit
         }
         if ($pengembalian->wasChanged('tgl_kembali')) {
             $old = $pengembalian->getOriginal('tgl_kembali');
-            $new = $pengembalian->tgl_kembali instanceof \Carbon\Carbon ? $pengembalian->tgl_kembali->format('Y-m-d') : $pengembalian->tgl_kembali;
+            $new = $pengembalian->tgl_kembali instanceof Carbon ? $pengembalian->tgl_kembali->format('Y-m-d') : $pengembalian->tgl_kembali;
             $details[] = "tgl_kembali: '{$old}' -> '{$new}'";
         }
 

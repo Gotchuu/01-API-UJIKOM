@@ -21,7 +21,7 @@ class UserResource extends JsonResource
             'role' => $this->role,
             'no_hp' => $this->no_hp,
             'alamat' => $this->alamat,
-            'foto_profile' => $this->foto_profile ? url('storage/' . $this->foto_profile) : null,
+            'foto_profile' => $this->foto_profile ? url('storage/'.$this->foto_profile) : null,
             'bergabung_sejak' => $this->created_at?->format('Y-m-d'),
         ];
     }

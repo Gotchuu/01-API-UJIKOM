@@ -2,22 +2,19 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-
-// Import Model
-use App\Models\Pengembalian;
 use App\Models\Alat;
-use App\Models\Peminjaman;
+// Import Model
 use App\Models\Kategori;
+use App\Models\Peminjaman;
+use App\Models\Pengembalian;
 use App\Models\User;
-
-// Import Observer
-use App\Observers\PengembalianObserver;
 use App\Observers\AlatObserver;
-use App\Observers\PeminjamanObserver;
+// Import Observer
 use App\Observers\KategoriObserver;
+use App\Observers\PeminjamanObserver;
+use App\Observers\PengembalianObserver;
 use App\Observers\UserObserver;
-
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -28,11 +25,11 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-    // Daftarkan seluruh Observer di sini
-    Pengembalian::observe(PengembalianObserver::class);
-    Alat::observe(AlatObserver::class);
-    Peminjaman::observe(PeminjamanObserver::class);
-    Kategori::observe(KategoriObserver::class); // BARU
-    User::observe(UserObserver::class); 
+        // Daftarkan seluruh Observer di sini
+        Pengembalian::observe(PengembalianObserver::class);
+        Alat::observe(AlatObserver::class);
+        Peminjaman::observe(PeminjamanObserver::class);
+        Kategori::observe(KategoriObserver::class); // BARU
+        User::observe(UserObserver::class);
     }
 }
