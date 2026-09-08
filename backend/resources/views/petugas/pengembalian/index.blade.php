@@ -31,7 +31,8 @@
                         <th class="py-3 px-4 border-b">Kondisi Barang</th>
                         <th class="py-3 px-4 border-b">Denda</th>
                         <th class="py-3 px-4 border-b">Petugas Verifikasi</th>
-                    </tr>
+                <th class="py-3 px-4 border-b text-center">Aksi</th>
+                </tr>
                 </thead>
                 <tbody class="text-gray-700 text-sm">
                     @forelse($pengembalians as $item)
@@ -55,14 +56,44 @@
                             <td class="py-3 px-4 border-b">
                                 {{ $item->petugas->name ?? 'Sistem' }}
                             </td>
+                            <td class="py-3 px-4 border-b text-center">
+                                <button onclick="openPesan({{ $item->id }}, '{{ $item->peminjaman->user->name }}')" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded text-xs">Lapor</button>
+                        </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="py-6 text-center text-gray-500">Belum ada data pengembalian alat.</td>
+                            <td colspan="6" class="py-6 text-center text-gray-500">Belum ada data pengembalian alat.</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
     </div>
+
+<div id="modalPesan" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
+    <h4 class="font-bold mb-3 text-gray-800">Lapor Perbaikan Pengembalian</h4>
+    <div id="pesanInfo" class="bg-gray-50 p-3 rounded text-xs mb-3 text-gray-700"></div>
+    <form action="{{ route('petugas.pesan.store') }}" method="POST">
+      @csrf
+      <input type="hidden" name="pengembalian_id" id="pesan_id">
+      <select name="jenis" required class="w-full border border-gray-300 rounded p-2 text-sm mb-3 focus:ring-2 focus:ring-amber-500">
+        <option value="kondisi">Kondisi Barang Salah</option>
+        <option value="denda">Denda Salah</option>
+        <option value="tanggal">Tanggal Salah</option>
+        <option value="lainnya">Lainnya</option>
+      </select>
+      <textarea name="pesan" rows="3" required placeholder="Tulis pesan untuk admin..." class="w-full border border-gray-300 rounded p-2 text-sm mb-3 focus:ring-2 focus:ring-amber-500"></textarea>
+      <div class="flex justify-end gap-2">
+        <button type="button" onclick="closePesan()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded text-sm">Batal</button>
+        <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded text-sm">Kirim</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+function openPesan(id, nama){ document.getElementById('pesan_id').value=id; document.getElementById('pesanInfo').innerText='Pengembalian ID: #'+id+' - '+nama; document.getElementById('modalPesan').classList.remove('hidden'); document.getElementById('modalPesan').classList.add('flex'); }
+function closePesan(){ document.getElementById('modalPesan').classList.add('hidden'); document.getElementById('modalPesan').classList.remove('flex'); }
+</script>
+
 @endsection

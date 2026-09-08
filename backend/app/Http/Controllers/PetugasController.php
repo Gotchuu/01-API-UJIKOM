@@ -141,4 +141,20 @@ app()->instance('skip_alat_log', false);
 
         return view('petugas.dashboard', compact('menunggu','dipinjam','telat','kembaliHariIni','totalAlat','stokMenipis','recent'));
     }
+
+    public function storePesanPerbaikan(Request $request) {
+    $request->validate([
+        'pengembalian_id' => 'required|exists:pengembalian,id',
+        'jenis' => 'required|in:kondisi,denda,tanggal,lainnya',
+        'pesan' => 'required|string|min:10|max:500',
+    ]);
+    PesanPerbaikan::create([
+        'pengembalian_id' => $request->pengembalian_id,
+        'petugas_id' => auth()->id(),
+        'jenis' => $request->jenis,
+        'pesan' => $request->pesan,
+        'status' => 'terkirim',
+    ]);
+    return back()->with('success','Pesan perbaikan terkirim ke admin!');
+    }
 }
