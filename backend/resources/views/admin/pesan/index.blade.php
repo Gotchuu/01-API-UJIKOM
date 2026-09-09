@@ -48,8 +48,8 @@
                         <td class="py-3 px-4 border-b text-center">
                             @if($pesan->status=='terkirim')
                             <div class="flex justify-center gap-1">
-                                <button data-id="{{ $pesan->id }}" data-pesan="{{ $pesan->pesan }}" data-jenis="{{ $pesan->jenis }}" onclick="openBenarkan(this)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs">Benarkan</button>
-                                <button data-id="{{ $pesan->id }}" data-pesan="{{ $pesan->pesan }}" data-jenis="{{ $pesan->jenis }}" onclick="openBatal(this)" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs">Batal</button>
+                                <button data-id="{{ $pesan->id }}" data-pesan="{{ $pesan->pesan }}" data-jenis="{{ $pesan->jenis }}" data-detail="{{ $pesan->pengembalian->peminjaman->detailPinjams->map(fn($d) => ($d->alat->nama_alat ?? "Alat Dihapus") . " (" . $d->jumlah . " unit)")->join(", ") }}" onclick="openBenarkan(this)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs">Benarkan</button>
+                                <button data-id="{{ $pesan->id }}" data-pesan="{{ $pesan->pesan }}" data-jenis="{{ $pesan->jenis }}" data-detail="{{ $pesan->pengembalian->peminjaman->detailPinjams->map(fn($d) => ($d->alat->nama_alat ?? "Alat Dihapus") . " (" . $d->jumlah . " unit)")->join(", ") }}" onclick="openBatal(this)" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs">Batal</button>
                             </div>
                             @else
                             <span class="text-xs text-gray-400">Selesai</span>
@@ -69,6 +69,10 @@
     <div id="modalBenarkan" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
         <div class="bg-white p-6 rounded-lg w-full max-w-md">
             <h4 class="font-bold mb-2">Benarkan Laporan (Hapus Pengembalian)</h4>
+            <div class="bg-blue-50 border border-blue-200 p-3 rounded text-xs mb-3">
+                <div class="font-semibold text-blue-800">Detail Alat:</div>
+                <div id="detailAlatBenarkan" class="text-gray-700 mt-1"></div>
+            </div>
             <div class="bg-amber-50 border border-amber-200 p-3 rounded text-xs mb-3">
                 <div class="font-semibold text-amber-800">Pesan Petugas:</div>
                 <div id="pesanPetugasBenarkan" class="text-gray-800 mt-1"></div>
@@ -88,6 +92,10 @@
     <div id="modalBatal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
         <div class="bg-white p-6 rounded-lg w-full max-w-md">
             <h4 class="font-bold mb-2">Batalkan Laporan</h4>
+            <div class="bg-blue-50 border border-blue-200 p-3 rounded text-xs mb-3">
+                <div class="font-semibold text-blue-800">Detail Alat:</div>
+                <div id="detailAlatBatal" class="text-gray-700 mt-1"></div>
+            </div>
             <div class="bg-gray-50 border p-3 rounded text-xs mb-3">
                 <div class="font-semibold">Pesan Petugas:</div>
                 <div id="pesanPetugasBatal" class="text-gray-800 mt-1"></div>
@@ -104,9 +112,9 @@
     </div>
 
     <script>
-    function openBenarkan(btn){ const id=btn.dataset.id; const pesan=btn.dataset.pesan; const jenis=btn.dataset.jenis; document.getElementById('formBenarkan').action='/admin/pesan-perbaikan/'+id; document.getElementById('pesanPetugasBenarkan').innerText=pesan; document.getElementById('jenisBenarkan').innerText=jenis; document.getElementById('modalBenarkan').classList.remove('hidden'); document.getElementById('modalBenarkan').classList.add('flex'); }
+    function openBenarkan(btn){ const id=btn.dataset.id; const pesan=btn.dataset.pesan; const jenis=btn.dataset.jenis; const detail=btn.dataset.detail; document.getElementById('formBenarkan').action='/admin/pesan-perbaikan/'+id; document.getElementById('pesanPetugasBenarkan').innerText=pesan; document.getElementById('jenisBenarkan').innerText=jenis; document.getElementById('detailAlatBenarkan').innerText=detail; document.getElementById('modalBenarkan').classList.remove('hidden'); document.getElementById('modalBenarkan').classList.add('flex'); }
     function closeBenarkan(){ document.getElementById('modalBenarkan').classList.add('hidden'); document.getElementById('modalBenarkan').classList.remove('flex'); }
-    function openBatal(btn){ const id=btn.dataset.id; const pesan=btn.dataset.pesan; const jenis=btn.dataset.jenis; document.getElementById('formBatal').action='/admin/pesan-perbaikan/'+id; document.getElementById('pesanPetugasBatal').innerText=pesan; document.getElementById('jenisBatal').innerText=jenis; document.getElementById('modalBatal').classList.remove('hidden'); document.getElementById('modalBatal').classList.add('flex'); }
+    function openBatal(btn){ const id=btn.dataset.id; const pesan=btn.dataset.pesan; const jenis=btn.dataset.jenis; const detail=btn.dataset.detail; document.getElementById('formBatal').action='/admin/pesan-perbaikan/'+id; document.getElementById('pesanPetugasBatal').innerText=pesan; document.getElementById('jenisBatal').innerText=jenis; document.getElementById('detailAlatBatal').innerText=detail; document.getElementById('modalBatal').classList.remove('hidden'); document.getElementById('modalBatal').classList.add('flex'); }
     function closeBatal(){ document.getElementById('modalBatal').classList.add('hidden'); document.getElementById('modalBatal').classList.remove('flex'); }
     </script>
 @endsection

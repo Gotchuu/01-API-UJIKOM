@@ -57,7 +57,7 @@
                                 {{ $item->petugas->name ?? 'Sistem' }}
                             </td>
                             <td class="py-3 px-4 border-b text-center">
-                                <button onclick="openPesan({{ $item->id }}, '{{ $item->peminjaman->user->name }}')" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded text-xs">Lapor</button>
+                                <button onclick='openPesan({{ $item->id }}, @json($item->peminjaman->user->name ?? "N/A"), @json($item->peminjaman->detailPinjams->map(fn($d) => ($d->alat->nama_alat ?? "Alat Dihapus") . " (" . $d->jumlah . " unit)")->join(", ")))' class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded text-xs">Lapor</button>
                         </td>
                         </tr>
                     @empty
@@ -74,6 +74,10 @@
   <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
     <h4 class="font-bold mb-3 text-gray-800">Lapor Perbaikan Pengembalian</h4>
     <div id="pesanInfo" class="bg-gray-50 p-3 rounded text-xs mb-3 text-gray-700"></div>
+    <div class="bg-blue-50 border border-blue-200 p-3 rounded text-xs mb-3">
+        <div class="font-semibold text-blue-800">Detail Alat:</div>
+        <ul id="pesanDetailAlat" class="list-disc pl-4 mt-1 text-gray-700"></ul>
+    </div>
     <form action="{{ route('petugas.pesan.store') }}" method="POST">
       @csrf
       <input type="hidden" name="pengembalian_id" id="pesan_id">
@@ -92,7 +96,7 @@
   </div>
 </div>
 <script>
-function openPesan(id, nama){ document.getElementById('pesan_id').value=id; document.getElementById('pesanInfo').innerText='Pengembalian ID: #'+id+' - '+nama; document.getElementById('modalPesan').classList.remove('hidden'); document.getElementById('modalPesan').classList.add('flex'); }
+function openPesan(id, nama, detail){ document.getElementById('pesan_id').value=id; document.getElementById('pesanInfo').innerText='Pengembalian ID: #'+id+' - '+nama; const ul=document.getElementById('pesanDetailAlat'); ul.innerHTML=''; detail.split(', ').forEach(a=>{ const li=document.createElement('li'); li.innerText=a; ul.appendChild(li); }); document.getElementById('modalPesan').classList.remove('hidden'); document.getElementById('modalPesan').classList.add('flex'); }
 function closePesan(){ document.getElementById('modalPesan').classList.add('hidden'); document.getElementById('modalPesan').classList.remove('flex'); }
 </script>
 
