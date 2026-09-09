@@ -7,11 +7,14 @@
     @if(session('success'))
         <div class="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-lg text-sm">{{ session('success') }}</div>
     @endif
+    @if(session('error'))
+        <div class="mb-4 bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg text-sm">{{ session('error') }}</div>
+    @endif
 
     <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
         <div class="p-5 border-b bg-gray-50">
             <h3 class="text-lg font-bold text-gray-800">Daftar Laporan Perbaikan dari Petugas</h3>
-            <p class="text-xs text-gray-500">Benarkan = hapus pengembalian & balik jadi dipinjam | Batal = tolak laporan</p>
+            <p class="text-xs text-gray-500">Perbaiki = hapus pengembalian & balik jadi dipinjam | Batal = tolak laporan</p>
         </div>
 
         <div class="overflow-x-auto">
@@ -48,8 +51,8 @@
                         <td class="py-3 px-4 border-b text-center">
                             @if($pesan->status=='terkirim')
                             <div class="flex justify-center gap-1">
-                                <button data-id="{{ $pesan->id }}" data-pesan="{{ $pesan->pesan }}" data-jenis="{{ $pesan->jenis }}" data-detail="{{ $pesan->pengembalian->peminjaman->detailPinjams->map(fn($d) => ($d->alat->nama_alat ?? "Alat Dihapus") . " (" . $d->jumlah . " unit)")->join(", ") }}" onclick="openBenarkan(this)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs">Benarkan</button>
-                                <button data-id="{{ $pesan->id }}" data-pesan="{{ $pesan->pesan }}" data-jenis="{{ $pesan->jenis }}" data-detail="{{ $pesan->pengembalian->peminjaman->detailPinjams->map(fn($d) => ($d->alat->nama_alat ?? "Alat Dihapus") . " (" . $d->jumlah . " unit)")->join(", ") }}" onclick="openBatal(this)" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs">Batal</button>
+                                <button data-id="{{ $pesan->id }}" data-pesan="{{ $pesan->pesan }}" data-jenis="{{ $pesan->jenis }}" data-detail="{{ $pesan->pengembalian->peminjaman->detailPinjams->map(fn($d) => ($d->alat->nama_alat ?? 'Alat Dihapus') . ' (' . $d->jumlah . ' unit)')->join(', ') }}" onclick="openPerbaiki(this)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs">Perbaiki</button>
+                                <button data-id="{{ $pesan->id }}" data-pesan="{{ $pesan->pesan }}" data-jenis="{{ $pesan->jenis }}" data-detail="{{ $pesan->pengembalian->peminjaman->detailPinjams->map(fn($d) => ($d->alat->nama_alat ?? 'Alat Dihapus') . ' (' . $d->jumlah . ' unit)')->join(', ') }}" onclick="openBatal(this)" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs">Batal</button>
                             </div>
                             @else
                             <span class="text-xs text-gray-400">Selesai</span>
@@ -65,25 +68,25 @@
         <div class="p-4 border-t bg-gray-50">{{ $pesans->links() }}</div>
     </div>
 
-    {{-- Modal Benarkan --}}
-    <div id="modalBenarkan" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    {{-- Modal Perbaiki --}}
+    <div id="modalPerbaiki" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
         <div class="bg-white p-6 rounded-lg w-full max-w-md">
-            <h4 class="font-bold mb-2">Benarkan Laporan (Hapus Pengembalian)</h4>
+            <h4 class="font-bold mb-2">Perbaiki Laporan (Hapus Pengembalian)</h4>
             <div class="bg-blue-50 border border-blue-200 p-3 rounded text-xs mb-3">
                 <div class="font-semibold text-blue-800">Detail Alat:</div>
-                <div id="detailAlatBenarkan" class="text-gray-700 mt-1"></div>
+                <div id="detailAlatPerbaiki" class="text-gray-700 mt-1"></div>
             </div>
             <div class="bg-amber-50 border border-amber-200 p-3 rounded text-xs mb-3">
                 <div class="font-semibold text-amber-800">Pesan Petugas:</div>
-                <div id="pesanPetugasBenarkan" class="text-gray-800 mt-1"></div>
-                <div class="text-gray-500 mt-1">Jenis: <span id="jenisBenarkan" class="font-semibold"></span></div>
+                <div id="pesanPetugasPerbaiki" class="text-gray-800 mt-1"></div>
+                <div class="text-gray-500 mt-1">Jenis: <span id="jenisPerbaiki" class="font-semibold"></span></div>
             </div>
             <p class="text-xs text-gray-500 mb-2">Pengembalian akan dihapus & status balik jadi Dipinjam. Wajib isi catatan admin:</p>
-            <form id="formBenarkan" method="POST">
+            <form id="formPerbaiki" method="POST">
                 @csrf @method('PUT')
-                <input type="hidden" name="aksi" value="benarkan">
+                <input type="hidden" name="aksi" value="perbaiki">
                 <textarea name="admin_catatan" required minlength="5" placeholder="Catatan admin..." class="w-full border rounded p-2 text-sm mb-3" rows="3"></textarea>
-                <div class="flex justify-end gap-2"><button type="button" onclick="closeBenarkan()" class="bg-gray-300 px-4 py-2 rounded text-sm">Batal</button><button type="submit" class="bg-emerald-600 text-white px-4 py-2 rounded text-sm">Ya, Benarkan</button></div>
+                <div class="flex justify-end gap-2"><button type="button" onclick="closePerbaiki()" class="bg-gray-300 px-4 py-2 rounded text-sm">Batal</button><button type="submit" class="bg-emerald-600 text-white px-4 py-2 rounded text-sm">Ya, Perbaiki</button></div>
             </form>
         </div>
     </div>
@@ -112,8 +115,13 @@
     </div>
 
     <script>
-    function openBenarkan(btn){ const id=btn.dataset.id; const pesan=btn.dataset.pesan; const jenis=btn.dataset.jenis; const detail=btn.dataset.detail; document.getElementById('formBenarkan').action='/admin/pesan-perbaikan/'+id; document.getElementById('pesanPetugasBenarkan').innerText=pesan; document.getElementById('jenisBenarkan').innerText=jenis; document.getElementById('detailAlatBenarkan').innerText=detail; document.getElementById('modalBenarkan').classList.remove('hidden'); document.getElementById('modalBenarkan').classList.add('flex'); }
-    function closeBenarkan(){ document.getElementById('modalBenarkan').classList.add('hidden'); document.getElementById('modalBenarkan').classList.remove('flex'); }
+    function openPerbaiki(btn){
+         const id=btn.dataset.id; const pesan=btn.dataset.pesan; const jenis=btn.dataset.jenis; const detail=btn.dataset.detail; document.getElementById('formPerbaiki').action='{{ url("/admin/pesan-perbaikan") }}/'+id; document.getElementById('pesanPetugasPerbaiki').innerText=pesan; document.getElementById('jenisPerbaiki').innerText=jenis; document.getElementById('detailAlatPerbaiki').innerText=detail; document.getElementById('modalPerbaiki').classList.remove('hidden'); document.getElementById('modalPerbaiki').classList.add('flex'); 
+        }
+    function closePerbaiki(){ 
+        document.getElementById('modalPerbaiki').classList.add('hidden'); document.getElementById('modalPerbaiki').classList.remove('flex');
+    }
+    
     function openBatal(btn){ const id=btn.dataset.id; const pesan=btn.dataset.pesan; const jenis=btn.dataset.jenis; const detail=btn.dataset.detail; document.getElementById('formBatal').action='/admin/pesan-perbaikan/'+id; document.getElementById('pesanPetugasBatal').innerText=pesan; document.getElementById('jenisBatal').innerText=jenis; document.getElementById('detailAlatBatal').innerText=detail; document.getElementById('modalBatal').classList.remove('hidden'); document.getElementById('modalBatal').classList.add('flex'); }
     function closeBatal(){ document.getElementById('modalBatal').classList.add('hidden'); document.getElementById('modalBatal').classList.remove('flex'); }
     </script>

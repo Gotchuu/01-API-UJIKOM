@@ -589,13 +589,13 @@ class AdminController extends Controller
     public function updatePesan(Request $request, $id)
     {
         $request->validate([
-            'aksi' => 'required|in:benarkan,batal',
+            'aksi' => 'required|in:perbaiki,batal',
             'admin_catatan' => 'required|string|min:5|max:500',
         ]);
 
         $pesan = PesanPerbaikan::findOrFail($id);
 
-        if ($request->aksi === 'benarkan') {
+        if ($request->aksi === 'perbaiki') {
 
             // pakai logika hapus yang sudah ada
             $pengembalian = $pesan->pengembalian;
@@ -618,7 +618,7 @@ class AdminController extends Controller
 
             $pesan->update(['status' => 'selesai', 'admin_id' => auth()->id(), 'admin_catatan' => $request->admin_catatan]);
 
-            return back()->with('success', 'Laporan dibenarkan: pengembalian dihapus & status balik dipinjam.');
+            return back()->with('success', 'Laporan diperbaiki: pengembalian dihapus & status balik dipinjam.');
         } else {
             $pesan->update(['status' => 'dibaca', 'admin_id' => auth()->id(), 'admin_catatan' => $request->admin_catatan]);
 
