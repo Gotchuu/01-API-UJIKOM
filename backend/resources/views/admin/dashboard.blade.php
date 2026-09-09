@@ -9,6 +9,20 @@
         <span class="text-xs text-gray-400">{{ now()->format('d M Y • H:i') }}</span>
     </div>
 
+    {{-- Alert Pesan Petugas - hanya muncul kalau ada --}}
+    @if($jmlPesanTerkirim > 0)
+    <div class="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-amber-100 rounded-lg flex items-center justify-center">⚠️</div>
+            <div>
+                <p class="text-sm font-semibold text-amber-900">Ada {{ $jmlPesanTerkirim }} laporan perbaikan dari petugas perlu ditindak</p>
+                <p class="text-xs text-amber-700">Klik untuk lihat detail • status: terkirim</p>
+            </div>
+        </div>
+        <a href="{{ route('admin.pesan.index') }}" class="bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium px-4 py-2 rounded-lg">Lihat Laporan →</a>
+    </div>
+    @endif
+
     {{-- 4 Kartu --}}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="bg-white border border-gray-200 rounded-xl p-5">
@@ -26,10 +40,15 @@
             <p class="text-2xl font-bold text-gray-900 mt-3">{{ $peminjamanAktif }}</p>
             <p class="text-xs mt-1"><span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">{{ $peminjamanDiajukan }} diajukan</span> <span class="text-gray-400">• {{ $peminjamanDipinjam }} dipinjam</span></p>
         </div>
-        <div class="bg-white border border-gray-200 rounded-xl p-5">
-            <div class="flex justify-between items-center"><p class="text-xs font-semibold tracking-widest text-gray-400 uppercase">Stok Menipis</p><div class="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center text-red-500">!</div></div>
-            <p class="text-2xl font-bold text-gray-900 mt-3">{{ $stokMenipis }}</p>
-            <p class="text-xs text-gray-500 mt-1">@if($stokMenipis>0)<span class="text-red-600 font-medium">perlu restock</span> @else aman @endif • stok ≤ 3</p>
+        <div class="bg-white border {{ $jmlPesanTerkirim > 0 ? 'border-amber-200 bg-amber-50/30' : 'border-gray-200' }} rounded-xl p-5">
+            <div class="flex justify-between items-center">
+                <p class="text-xs font-semibold tracking-widest {{ $jmlPesanTerkirim > 0 ? 'text-amber-600' : 'text-gray-400' }} uppercase">
+                    {{ $jmlPesanTerkirim > 0 ? 'Laporan Masuk' : 'Stok Menipis' }}
+                </p>
+                <div class="w-8 h-8 {{ $jmlPesanTerkirim > 0 ? 'bg-amber-100 text-amber-600' : 'bg-gray-50 text-gray-400' }} rounded-lg flex items-center justify-center">{{ $jmlPesanTerkirim > 0 ? '✉' : '!' }}</div>
+            </div>
+            <p class="text-2xl font-bold {{ $jmlPesanTerkirim > 0 ? 'text-amber-700' : 'text-gray-900' }} mt-3">{{ $jmlPesanTerkirim > 0 ? $jmlPesanTerkirim : $stokMenipis }}</p>
+            <p class="text-xs {{ $jmlPesanTerkirim > 0 ? 'text-amber-700' : 'text-gray-500' }} mt-1">{{ $jmlPesanTerkirim > 0 ? 'perlu ditindak • terkirim' : 'perlu restock • stok ≤ 3' }}</p>
         </div>
     </div>
 
@@ -57,7 +76,28 @@
                 </table>
             </div>
         </div>
+        
         <div class="space-y-4">
+            {{-- Panel Pesan Perbaikan --}}
+            <div class="bg-white border border-amber-200 rounded-xl p-5 shadow-sm">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-semibold">Pesan Perbaikan</h3>
+                    @if($jmlPesanTerkirim > 0)<span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">{{ $jmlPesanTerkirim }} baru</span>@endif
+                </div>
+                <div class="space-y-3 text-sm">
+                    @forelse($pesanTerbaru as $ps)
+                        <div class="bg-amber-50 border border-amber-100 rounded-lg p-3">
+                            <p class="font-medium text-gray-900">{{ ucfirst($ps->jenis) }}</p>
+                            <p class="text-xs text-gray-600 mt-1">"{{ Str::limit($ps->pesan, 70) }}"</p>
+                            <p class="text-xs text-gray-500 mt-2">Petugas {{ $ps->petugas->name ?? 'N/A' }} • {{ $ps->created_at->diffForHumans() }}</p>
+                        </div>
+                    @empty
+                        <p class="text-sm text-gray-500 text-center py-4">Tidak ada laporan baru ✓</p>
+                    @endforelse
+                </div>
+                <a href="{{ route('admin.pesan.index') }}" class="block text-center bg-gray-900 hover:bg-black text-white text-sm font-medium px-4 py-2.5 rounded-lg mt-4">Kelola Laporan →</a>
+            </div>
+
             <div class="bg-white border border-gray-200 rounded-xl p-5">
                 <h3 class="text-sm font-semibold text-gray-800 mb-3">Aksi Cepat</h3>
                 <div class="space-y-2">
@@ -66,7 +106,6 @@
                         <a href="{{ route('admin.alat.create') }}" class="bg-white border border-gray-200 hover:bg-gray-50 text-sm font-medium px-3 py-2.5 rounded-lg text-center">+ Alat</a>
                         <a href="{{ route('admin.user.create') }}" class="bg-white border border-gray-200 hover:bg-gray-50 text-sm font-medium px-3 py-2.5 rounded-lg text-center">+ User</a>
                     </div>
-                    
                 </div>
             </div>
             <div class="bg-white border border-gray-200 rounded-xl p-5">

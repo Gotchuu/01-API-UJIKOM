@@ -23,7 +23,6 @@ class AdminController extends Controller
 {
     $logs = LogAktivitas::with('user')->latest()->take(10)->get();
 
-    // Data untuk 4 kartu minimalis
     $totalAlat = \App\Models\Alat::count();
     $totalUser = \App\Models\User::count();
     $totalKategori = \App\Models\Kategori::count();
@@ -33,10 +32,15 @@ class AdminController extends Controller
     $stokMenipis = \App\Models\Alat::where('stok', '<=', 3)->count();
     $alatsMenipis = \App\Models\Alat::with('kategori')->where('stok', '<=', 3)->orderBy('stok')->take(3)->get();
 
+    // BARU - untuk peringatan pesan petugas
+    $jmlPesanTerkirim = \App\Models\PesanPerbaikan::where('status', 'terkirim')->count();
+    $pesanTerbaru = \App\Models\PesanPerbaikan::with(['petugas','pengembalian'])->where('status', 'terkirim')->latest()->take(2)->get();
+
     return view('admin.dashboard', compact(
         'logs', 'totalAlat', 'totalUser', 'totalKategori',
         'peminjamanDiajukan', 'peminjamanDipinjam', 'peminjamanAktif',
-        'stokMenipis', 'alatsMenipis'
+        'stokMenipis', 'alatsMenipis',
+        'jmlPesanTerkirim', 'pesanTerbaru'
     ));
 }
 
