@@ -66,7 +66,7 @@
                         <a href="{{ route('admin.alat.create') }}" class="bg-white border border-gray-200 hover:bg-gray-50 text-sm font-medium px-3 py-2.5 rounded-lg text-center">+ Alat</a>
                         <a href="{{ route('admin.user.create') }}" class="bg-white border border-gray-200 hover:bg-gray-50 text-sm font-medium px-3 py-2.5 rounded-lg text-center">+ User</a>
                     </div>
-                    <a href="{{ route('admin.peminjaman.index') }}?search=diajukan" class="flex justify-between bg-white border border-gray-200 hover:bg-gray-50 text-sm font-medium px-4 py-2.5 rounded-lg"><span>Lihat Diajukan</span><span class="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full font-bold">{{ $peminjamanDiajukan }}</span></a>
+                    
                 </div>
             </div>
             <div class="bg-white border border-gray-200 rounded-xl p-5">

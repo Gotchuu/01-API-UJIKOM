@@ -120,7 +120,7 @@
                 <button onclick="closeModalPengembalian()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
             </div>
 
-                        <form action="{{ route('petugas.pengembalian.store') }}" method="POST">
+                        <form action="{{ route('admin.pengembalian.store') }}" method="POST">
                 @csrf
                 <input type="hidden" name="peminjaman_id" id="modal_peminjaman_id">
 

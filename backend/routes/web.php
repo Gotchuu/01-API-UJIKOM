@@ -55,7 +55,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 });
 
 // Petugas
-Route::middleware(['auth', 'role:petugas,admin'])->prefix('petugas')->name('petugas.')->group(function () {
+Route::middleware(['auth', 'role:petugas'])->prefix('petugas')->name('petugas.')->group(function () {
     // Peminjaman & Persetujuan
     Route::get('/dashboard', [PetugasController::class, 'dashboard'])->name('dashboard');
 
