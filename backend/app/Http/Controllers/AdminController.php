@@ -20,11 +20,25 @@ class AdminController extends Controller
 {
     // Menampilkan Dashboard Admin & Log Aktivitas
     public function index()
-    {
-        $logs = LogAktivitas::with('user')->latest()->take(10)->get();
+{
+    $logs = LogAktivitas::with('user')->latest()->take(10)->get();
 
-        return view('admin.dashboard', compact('logs'));
-    }
+    // Data untuk 4 kartu minimalis
+    $totalAlat = \App\Models\Alat::count();
+    $totalUser = \App\Models\User::count();
+    $totalKategori = \App\Models\Kategori::count();
+    $peminjamanDiajukan = \App\Models\Peminjaman::where('status', 'diajukan')->count();
+    $peminjamanDipinjam = \App\Models\Peminjaman::where('status', 'dipinjam')->count();
+    $peminjamanAktif = $peminjamanDiajukan + $peminjamanDipinjam;
+    $stokMenipis = \App\Models\Alat::where('stok', '<=', 3)->count();
+    $alatsMenipis = \App\Models\Alat::with('kategori')->where('stok', '<=', 3)->orderBy('stok')->take(3)->get();
+
+    return view('admin.dashboard', compact(
+        'logs', 'totalAlat', 'totalUser', 'totalKategori',
+        'peminjamanDiajukan', 'peminjamanDipinjam', 'peminjamanAktif',
+        'stokMenipis', 'alatsMenipis'
+    ));
+}
 
     // CRUD Alat: Menampilkan daftar alat
     // 1. Menampilkan daftar alat
