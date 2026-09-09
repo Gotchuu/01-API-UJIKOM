@@ -50,6 +50,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/pengembalian', [AdminController::class, 'pengembalianStore'])->name('pengembalian.store');
     Route::delete('/pengembalian/{id}', [AdminController::class, 'destroyPengembalian'])->name('pengembalian.destroy');
     Route::get('/pesan-perbaikan', [AdminController::class, 'indexPesan'])->name('pesan.index');
+    Route::put('/pesan-perbaikan/{id}', [AdminController::class, 'updatePesan'])->name('pesan.update');
 
 });
 

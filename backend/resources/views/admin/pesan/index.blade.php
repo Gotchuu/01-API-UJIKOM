@@ -48,8 +48,8 @@
                         <td class="py-3 px-4 border-b text-center">
                             @if($pesan->status=='terkirim')
                             <div class="flex justify-center gap-1">
-                                <button onclick="openBenarkan({{ $pesan->id }})" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs">Benarkan</button>
-                                <button onclick="openBatal({{ $pesan->id }})" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs">Batal</button>
+                                <button data-id="{{ $pesan->id }}" data-pesan="{{ $pesan->pesan }}" data-jenis="{{ $pesan->jenis }}" onclick="openBenarkan(this)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs">Benarkan</button>
+                                <button data-id="{{ $pesan->id }}" data-pesan="{{ $pesan->pesan }}" data-jenis="{{ $pesan->jenis }}" onclick="openBatal(this)" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs">Batal</button>
                             </div>
                             @else
                             <span class="text-xs text-gray-400">Selesai</span>
@@ -69,7 +69,12 @@
     <div id="modalBenarkan" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
         <div class="bg-white p-6 rounded-lg w-full max-w-md">
             <h4 class="font-bold mb-2">Benarkan Laporan (Hapus Pengembalian)</h4>
-            <p class="text-xs text-gray-500 mb-3">Pengembalian akan dihapus & status balik jadi Dipinjam. Wajib isi catatan.</p>
+            <div class="bg-amber-50 border border-amber-200 p-3 rounded text-xs mb-3">
+                <div class="font-semibold text-amber-800">Pesan Petugas:</div>
+                <div id="pesanPetugasBenarkan" class="text-gray-800 mt-1"></div>
+                <div class="text-gray-500 mt-1">Jenis: <span id="jenisBenarkan" class="font-semibold"></span></div>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Pengembalian akan dihapus & status balik jadi Dipinjam. Wajib isi catatan admin:</p>
             <form id="formBenarkan" method="POST">
                 @csrf @method('PUT')
                 <input type="hidden" name="aksi" value="benarkan">
@@ -83,7 +88,12 @@
     <div id="modalBatal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
         <div class="bg-white p-6 rounded-lg w-full max-w-md">
             <h4 class="font-bold mb-2">Batalkan Laporan</h4>
-            <p class="text-xs text-gray-500 mb-3">Laporan akan ditolak. Wajib isi alasan.</p>
+            <div class="bg-gray-50 border p-3 rounded text-xs mb-3">
+                <div class="font-semibold">Pesan Petugas:</div>
+                <div id="pesanPetugasBatal" class="text-gray-800 mt-1"></div>
+                <div class="text-gray-500 mt-1">Jenis: <span id="jenisBatal" class="font-semibold"></span></div>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Laporan akan ditolak. Wajib isi alasan penolakan:</p>
             <form id="formBatal" method="POST">
                 @csrf @method('PUT')
                 <input type="hidden" name="aksi" value="batal">
@@ -94,9 +104,9 @@
     </div>
 
     <script>
-    function openBenarkan(id){ document.getElementById('formBenarkan').action='/admin/pesan-perbaikan/'+id; document.getElementById('modalBenarkan').classList.remove('hidden'); document.getElementById('modalBenarkan').classList.add('flex'); }
-    function closeBenarkan(){ document.getElementById('modalBenarkan').classList.add('hidden'); }
-    function openBatal(id){ document.getElementById('formBatal').action='/admin/pesan-perbaikan/'+id; document.getElementById('modalBatal').classList.remove('hidden'); document.getElementById('modalBatal').classList.add('flex'); }
-    function closeBatal(){ document.getElementById('modalBatal').classList.add('hidden'); }
+    function openBenarkan(btn){ const id=btn.dataset.id; const pesan=btn.dataset.pesan; const jenis=btn.dataset.jenis; document.getElementById('formBenarkan').action='/admin/pesan-perbaikan/'+id; document.getElementById('pesanPetugasBenarkan').innerText=pesan; document.getElementById('jenisBenarkan').innerText=jenis; document.getElementById('modalBenarkan').classList.remove('hidden'); document.getElementById('modalBenarkan').classList.add('flex'); }
+    function closeBenarkan(){ document.getElementById('modalBenarkan').classList.add('hidden'); document.getElementById('modalBenarkan').classList.remove('flex'); }
+    function openBatal(btn){ const id=btn.dataset.id; const pesan=btn.dataset.pesan; const jenis=btn.dataset.jenis; document.getElementById('formBatal').action='/admin/pesan-perbaikan/'+id; document.getElementById('pesanPetugasBatal').innerText=pesan; document.getElementById('jenisBatal').innerText=jenis; document.getElementById('modalBatal').classList.remove('hidden'); document.getElementById('modalBatal').classList.add('flex'); }
+    function closeBatal(){ document.getElementById('modalBatal').classList.add('hidden'); document.getElementById('modalBatal').classList.remove('flex'); }
     </script>
 @endsection
