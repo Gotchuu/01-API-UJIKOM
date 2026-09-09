@@ -31,7 +31,13 @@ class Peminjaman extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function detailPinjams(): HasMany
+    public function detailPinjam(): HasMany  // tetap buat API
+    {
+        return $this->hasMany(DetailPinjam::class);
+    }
+
+    // TAMBAHAN BARU - taruh persis di bawah detailPinjam()
+    public function detailPinjams(): HasMany  // alias buat View/AdminController
     {
         return $this->hasMany(DetailPinjam::class);
     }
