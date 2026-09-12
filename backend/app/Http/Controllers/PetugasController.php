@@ -166,4 +166,21 @@ class PetugasController extends Controller
 
         return back()->with('success', 'Pesan perbaikan terkirim ke admin!');
     }
+
+    // Riwayat laporan milik petugas sendiri + balasan admin
+    public function indexPesan(Request $request)
+    {
+        $status = $request->input('status'); // filter: terkirim/dibaca/selesai
+
+        $pesans = PesanPerbaikan::with(['pengembalian.peminjaman.user', 'admin'])
+            ->where('petugas_id', auth()->id())
+            ->when($status, function ($q, $status) {
+                $q->where('status', $status);
+            })
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('petugas.pesan.index', compact('pesans', 'status'));
+    }
 }

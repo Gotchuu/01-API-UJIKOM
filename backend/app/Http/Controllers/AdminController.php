@@ -583,11 +583,19 @@ class AdminController extends Controller
         }
     }
 
-    public function indexPesan()
+    public function indexPesan(Request $request)
     {
-        $pesans = PesanPerbaikan::with(['pengembalian.peminjaman.user', 'petugas', 'admin'])->latest()->paginate(10);
+        $status = $request->input('status'); // terkirim / dibaca / selesai
 
-        return view('admin.pesan.index', compact('pesans'));
+        $pesans = PesanPerbaikan::with(['pengembalian.peminjaman.user', 'petugas', 'admin'])
+            ->when($status, function ($q, $status) {
+                $q->where('status', $status);
+            })
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('admin.pesan.index', compact('pesans', 'status'));
     }
 
     public function updatePesan(Request $request, $id)

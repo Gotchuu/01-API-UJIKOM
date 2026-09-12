@@ -65,8 +65,9 @@ Route::middleware(['auth', 'role:petugas'])->prefix('petugas')->name('petugas.')
     Route::get('/pengembalian', [PetugasController::class, 'indexPengembalian'])->name('pengembalian.index');
     Route::post('/pengembalian', [PetugasController::class, 'storePengembalian'])->name('pengembalian.store');
     Route::get('/laporan', [PetugasController::class, 'indexLaporan'])->name('laporan.index');
-
+    Route::get('/pesan', [PetugasController::class, 'indexPesan'])->name('pesan.index'); // BARU
     Route::post('/pesan-perbaikan', [PetugasController::class, 'storePesanPerbaikan'])->name('pesan.store');
+    
 });
 // Peminjam
 Route::middleware(['auth', 'role:peminjam'])->prefix('peminjam')->name('peminjam.')->group(function () {

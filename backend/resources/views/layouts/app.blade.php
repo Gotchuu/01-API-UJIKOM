@@ -29,7 +29,7 @@
                 <a href="{{ route('admin.alat.index') }}" class="block px-4 py-2 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition">Kelola Alat</a>
                 <a href="{{ route('admin.peminjaman.index') }}" class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('admin.peminjaman*') ? 'bg-gray-800 text-white font-medium-shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }} ">Kelola Peminjaman</a>
                 <a href="{{ route('admin.pengembalian.index') }}" class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('admin.peminjaman*') ? 'bg-gray-800 text-white font-medium-shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }} ">Kelola Pengembalian</a>
-                
+                <a href="{{ route('admin.pesan.index') }}" class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('admin.peminjaman*') ? 'bg-gray-800 text-white font-medium-shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }} ">Riwayat Laporan</a>
                 @endif
 
                 <!-- MENU KHUSUS PETUGAS -->
@@ -46,10 +46,14 @@
                 class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('petugas.pengembalian*') ? 'bg-gray-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                     Pemantauan Pengembalian
                 </a>
+                <a href="{{ route('petugas.pesan.index') }}" class="block px-4 py-2 rounded-lg {{ request()->routeIs('petugas.pesan*') ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">Riwayat Laporan Saya</a>
+                
                 <a href="{{ route('petugas.laporan.index') }}"
                 class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('petugas.laporan*') ? 'bg-gray-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                     Cetak Laporan
                 </a>
+
+                
                 
                 @endif
             </nav>

@@ -11,6 +11,13 @@
         <div class="mb-4 bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg text-sm">{{ session('error') }}</div>
     @endif
 
+    <div class="flex gap-2 mb-4">
+        <a href="{{ route('admin.pesan.index') }}" class="px-4 py-2 rounded-full text-sm {{ !$status ? 'bg-gray-900 text-white' : 'bg-white border text-gray-600 hover:bg-gray-50' }}">Semua</a>
+        <a href="{{ route('admin.pesan.index', ['status'=>'terkirim']) }}" class="px-4 py-2 rounded-full text-sm {{ $status=='terkirim' ? 'bg-amber-500 text-white' : 'bg-white border text-gray-600 hover:bg-gray-50' }}">Terkirim</a>
+        <a href="{{ route('admin.pesan.index', ['status'=>'dibaca']) }}" class="px-4 py-2 rounded-full text-sm {{ $status=='dibaca' ? 'bg-gray-700 text-white' : 'bg-white border text-gray-600 hover:bg-gray-50' }}">Dibaca</a>
+        <a href="{{ route('admin.pesan.index', ['status'=>'selesai']) }}" class="px-4 py-2 rounded-full text-sm {{ $status=='selesai' ? 'bg-emerald-600 text-white' : 'bg-white border text-gray-600 hover:bg-gray-50' }}">Selesai</a>
+    </div>
+
     <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
         <div class="p-5 border-b bg-gray-50">
             <h3 class="text-lg font-bold text-gray-800">Daftar Laporan Perbaikan dari Petugas</h3>
@@ -33,8 +40,13 @@
                     @forelse($pesans as $pesan)
                     <tr class="hover:bg-gray-50">
                         <td class="py-3 px-4 border-b text-xs">
-                            <div class="font-semibold">#{{ $pesan->pengembalian_id }} - {{ $pesan->pengembalian->peminjaman->user->name ?? 'N/A' }}</div>
-                            <div class="text-gray-500">{{ $pesan->pengembalian->kondisi_kembali ?? '-' }} | Rp{{ number_format($pesan->pengembalian->denda ?? 0,0,',','.') }}</div>
+                            @if($pesan->pengembalian)
+                                <div class="font-semibold">#{{ $pesan->pengembalian_id }} - {{ $pesan->pengembalian->peminjaman->user->name ?? 'User Dihapus' }}</div>
+                                <div class="text-gray-500">{{ $pesan->pengembalian->kondisi_kembali ?? '-' }} | Rp{{ number_format($pesan->pengembalian->denda ?? 0,0,',','.') }}</div>
+                            @else
+                                <div class="font-semibold text-emerald-700">Laporan #{{ $pesan->id }} - Pengembalian Dihapus</div>
+                                <div class="text-emerald-600">Sudah diperbaiki • Status: {{ ucfirst($pesan->status) }}</div>
+                            @endif
                         </td>
                         <td class="py-3 px-4 border-b">{{ $pesan->petugas->name ?? 'N/A' }}</td>
                         <td class="py-3 px-4 border-b"><span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">{{ ucfirst($pesan->jenis) }}</span></td>
