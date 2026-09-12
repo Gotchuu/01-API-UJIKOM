@@ -34,6 +34,10 @@
 
                 <!-- MENU KHUSUS PETUGAS -->
                 @if(auth()->user()->role === 'petugas')
+
+                <a href="{{ route('petugas.dashboard') }}" class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('petugas.laporan*') ? 'bg-gray-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">Dashboard
+                </a>
+
                 <a href="{{ route('petugas.peminjaman.index') }}"
                 class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('petugas.peminjaman*') ? 'bg-gray-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                     Persetujuan Peminjaman
@@ -46,8 +50,7 @@
                 class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('petugas.laporan*') ? 'bg-gray-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                     Cetak Laporan
                 </a>
-                <a href="{{ route('petugas.dashboard') }}" class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('petugas.laporan*') ? 'bg-gray-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">Dashboard
-                </a>
+                
                 @endif
             </nav>
             <div class="p-4 border-t border-gray-800 text-sm text-gray-400">
