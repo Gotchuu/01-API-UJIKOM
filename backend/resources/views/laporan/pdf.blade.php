@@ -1,0 +1,5 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:sans-serif;font-size:11px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#f3f4f6}</style></head>
+<body><h3>Laporan Peminjaman ({{ $dari }} s/d {{ $sampai }}) @if($status) - {{ ucfirst($status) }} @endif</h3>
+<table><thead><tr><th>#</th><th>Peminjam</th><th>Alat</th><th>Tgl Pinjam</th><th>Status</th></tr></thead>
+<tbody>@foreach($peminjamans as $p)<tr><td>{{ $p->id }}</td><td>{{ $p->user->name }}</td><td>{{ $p->detailPinjams->map(fn($d)=>$d->alat->nama_alat.'('.$d->jumlah.')')->join(', ') }}</td><td>{{ $p->tgl_pinjam }}</td><td>{{ $p->status }}</td></tr>@endforeach</tbody>
+</table><p style="text-align:right;font-size:10px;margin-top:20px">Dicetak: {{ now()->format('d M Y H:i') }} • Petugas: {{ auth()->user()->name }}</p></body></html>

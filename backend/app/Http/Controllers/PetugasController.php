@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PetugasController extends Controller
 {
@@ -182,5 +183,38 @@ class PetugasController extends Controller
             ->withQueryString();
 
         return view('petugas.pesan.index', compact('pesans', 'status'));
+    }
+
+        // Laporan khusus Petugas - filter tanggal & status
+    public function indexLaporan(Request $request)
+    {
+        $dari = $request->input('dari', now()->subMonth()->toDateString());
+        $sampai = $request->input('sampai', now()->toDateString());
+        $status = $request->input('status');
+
+        $query = Peminjaman::with(['user', 'detailPinjams.alat'])
+            ->whereBetween('tgl_pinjam', [$dari, $sampai])
+            ->when($status, fn($q) => $q->where('status', $status));
+
+        $peminjamans = $query->latest()->paginate(10)->withQueryString();
+
+        return view('petugas.laporan.index', compact('peminjamans', 'dari', 'sampai', 'status'));
+    }
+
+    public function cetakPdf(Request $request)
+    {
+        $dari = $request->input('dari', now()->subMonth()->toDateString());
+        $sampai = $request->input('sampai', now()->toDateString());
+        $status = $request->input('status');
+
+        $peminjamans = Peminjaman::with(['user', 'detailPinjams.alat'])
+            ->whereBetween('tgl_pinjam', [$dari, $sampai])
+            ->when($status, fn($q) => $q->where('status', $status))
+            ->latest()->get();
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('laporan.pdf', compact('peminjamans', 'dari', 'sampai', 'status'))
+            ->setPaper('a4', 'landscape');
+
+        return $pdf->download('laporan-peminjaman-'.$dari.'-'.$sampai.'.pdf');
     }
 }

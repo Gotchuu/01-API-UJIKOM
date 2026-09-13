@@ -64,7 +64,8 @@ Route::middleware(['auth', 'role:petugas'])->prefix('petugas')->name('petugas.')
     Route::post('/peminjaman/{id}/tolak', [PetugasController::class, 'tolakPeminjaman'])->name('peminjaman.tolak');
     Route::get('/pengembalian', [PetugasController::class, 'indexPengembalian'])->name('pengembalian.index');
     Route::post('/pengembalian', [PetugasController::class, 'storePengembalian'])->name('pengembalian.store');
-    Route::get('/laporan', [PetugasController::class, 'indexLaporan'])->name('laporan.index');
+    Route::get('/laporan', [PetugasController::class, 'indexLaporan'])->name('laporan.index')->middleware('role:petugas');
+    Route::get('/laporan/cetak', [PetugasController::class, 'cetakPdf'])->name('laporan.cetak')->middleware('role:petugas');
     Route::get('/pesan', [PetugasController::class, 'indexPesan'])->name('pesan.index'); // BARU
     Route::post('/pesan-perbaikan', [PetugasController::class, 'storePesanPerbaikan'])->name('pesan.store');
     
