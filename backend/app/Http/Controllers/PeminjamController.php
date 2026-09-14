@@ -64,4 +64,39 @@ class PeminjamController extends Controller
 
         return view('peminjam.riwayat', compact('peminjamans'));
     }
+
+    public function showPeminjaman(Peminjaman $peminjaman)
+    {
+        $user = auth()->user();
+        if ($peminjaman->user_id !== $user->id) {
+            return redirect()->route('peminjam.katalog')->with('error', 'Akses ditolak.');
+        }
+        return view('peminjam.peminjaman.show', compact('peminjaman'));
+    }
+
+    public function updatePeminjaman(Request $request, Peminjaman $peminjaman)
+    {
+        $user = auth()->user();
+        if ($user->id !== $peminjaman->user_id || $peminjaman->status !== 'diajukan') {
+            return redirect()->back()->with('error', 'Tidak dapat diubah.');
+        }
+        $request->validate([
+            'tgl_kembali_plan' => 'required|date|after:today',
+        ]);
+        $peminjaman->update(['tgl_kembali_plan' => $request->tgl_kembali_plan]);
+        return redirect()->back()->with('success', 'Tanggal kembali diperbarui.');
+    }
+
+    public function destroyPeminjaman(Peminjaman $peminjaman)
+    {
+        $user = auth()->user();
+        if ($user->id !== $peminjaman->user_id || $peminjaman->status !== 'diajukan') {
+            return redirect()->back()->with('error', 'Tidak dapat dibatalkan.');
+        }
+        DB::transaction(function () use ($peminjaman) {
+            $peminjaman->detailPinjam()->delete();
+            $peminjaman->delete();
+        });
+        return redirect()->route('peminjam.katalog')->with('success', 'Pengajuan dibatalkan.');
+    }
 }
