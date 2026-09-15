@@ -74,15 +74,20 @@ class PeminjamController extends Controller
         }
     }
 
-    // Melihat riwayat peminjaman user yang sedang login
-    public function riwayatPeminjaman()
+    // Melihat riwayat peminjaman user yang sedang login (Lengkap Filter Status & Data Pengembalian)
+    public function riwayatPeminjaman(Request $request)
     {
-        $peminjamans = Peminjaman::with('detailPinjams.alat')
+        $status = $request->input('status');
+
+        $peminjamans = Peminjaman::with(['detailPinjams.alat', 'pengembalian'])
             ->where('user_id', auth()->id())
+            ->when($status, function ($query, $status) {
+                return $query->where('status', $status);
+            })
             ->latest()
             ->get();
 
-        return view('peminjam.riwayat', compact('peminjamans'));
+        return view('peminjam.riwayat', compact('peminjamans', 'status'));
     }
 
     public function showPeminjaman(Peminjaman $peminjaman)
