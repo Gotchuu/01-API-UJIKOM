@@ -77,9 +77,9 @@ Route::middleware(['auth', 'role:peminjam'])->prefix('peminjam')->name('peminjam
     Route::post('/peminjaman/ajukan', [PeminjamController::class, 'ajukanPeminjaman'])->name('peminjaman.ajukan');
     Route::get('/riwayat', [PeminjamController::class, 'riwayatPeminjaman'])->name('riwayat');
 
-    Route::get('/peminjaman/{id}', [PeminjamController::class, 'showPeminjaman'])->name('peminjaman.show');
-    Route::put('/peminjaman/{id}', [PeminjamController::class, 'updatePeminjaman'])->name('peminjaman.update');
-    Route::delete('/peminjaman/{id}', [PeminjamController::class, 'destroyPeminjaman'])->name('peminjaman.destroy');
+    Route::get('/peminjaman/{peminjaman}', [PeminjamController::class, 'showPeminjaman'])->name('peminjaman.show');
+    Route::put('/peminjaman/{peminjaman}', [PeminjamController::class, 'updatePeminjaman'])->name('peminjaman.update');
+    Route::delete('/peminjaman/{peminjaman}', [PeminjamController::class, 'destroyPeminjaman'])->name('peminjaman.destroy');
 });
 
 // Route Tamu (Belum Login)
