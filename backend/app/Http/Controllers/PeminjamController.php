@@ -8,6 +8,7 @@ use App\Models\DetailPinjam;
 use App\Models\Peminjaman;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use Exception;
 
 class PeminjamController extends Controller
@@ -123,5 +124,59 @@ class PeminjamController extends Controller
             $peminjaman->delete();
         });
         return redirect()->route('peminjam.katalog')->with('success', 'Pengajuan dibatalkan.');
+    }
+
+    // Method Dashboard Peminjam
+    public function dashboard()
+    {
+        $userId = auth()->id();
+
+        // 1. Hitung Statistik Ringkas
+        $totalDipinjam = Peminjaman::where('user_id', $userId)->where('status', 'dipinjam')->count();
+        $totalDiajukan = Peminjaman::where('user_id', $userId)->where('status', 'diajukan')->count();
+        $totalSelesai  = Peminjaman::where('user_id', $userId)->where('status', 'dikembalikan')->count();
+        
+        // Total Denda yang Pernah Dikenakan
+        $totalDenda = Peminjaman::where('user_id', $userId)
+            ->whereHas('pengembalian')
+            ->with('pengembalian')
+            ->get()
+            ->sum(fn($p) => $p->pengembalian->denda ?? 0);
+
+        // 2. Ambil Peminjaman Aktif (Status 'dipinjam')
+        $pinjamanAktif = Peminjaman::with('detailPinjams.alat')
+            ->where('user_id', $userId)
+            ->where('status', 'dipinjam')
+            ->latest()
+            ->get();
+
+        // 3. Cek Peringatan Tenggat Waktu (Terlambat atau H-1)
+        $today = Carbon::today();
+        $peringatan = [];
+
+        foreach ($pinjamanAktif as $pinjam) {
+            $tglPlan = Carbon::parse($pinjam->tgl_kembali_plan);
+            if ($today->greaterThan($tglPlan)) {
+                $selisih = $today->diffInDays($tglPlan);
+                $peringatan[] = [
+                    'type'    => 'danger',
+                    'message' => "Peminjaman ID #{$pinjam->id} sudah TERLAMBAT {$selisih} hari! Harap segera kembalikan ke Petugas."
+                ];
+            } elseif ($today->equalTo($tglPlan)) {
+                $peringatan[] = [
+                    'type'    => 'warning',
+                    'message' => "Peminjaman ID #{$pinjam->id} jatuh tempo HARI INI. Jangan lupa mengembalikan alat ke Petugas."
+                ];
+            }
+        }
+
+        return view('peminjam.dashboard', compact(
+            'totalDipinjam',
+            'totalDiajukan',
+            'totalSelesai',
+            'totalDenda',
+            'pinjamanAktif',
+            'peringatan'
+        ));
     }
 }
