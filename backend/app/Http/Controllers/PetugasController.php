@@ -192,7 +192,8 @@ class PetugasController extends Controller
         $sampai = $request->input('sampai', now()->toDateString());
         $status = $request->input('status');
 
-        $query = Peminjaman::with(['user', 'detailPinjams.alat'])
+        // Tambahkan relasi 'pengembalian.petugas' ke dalam with()
+        $query = Peminjaman::with(['user', 'detailPinjams.alat', 'pengembalian.petugas'])
             ->whereBetween('tgl_pinjam', [$dari, $sampai])
             ->when($status, fn($q) => $q->where('status', $status));
 
@@ -207,14 +208,16 @@ class PetugasController extends Controller
         $sampai = $request->input('sampai', now()->toDateString());
         $status = $request->input('status');
 
-        $peminjamans = Peminjaman::with(['user', 'detailPinjams.alat'])
+        // Tambahkan relasi 'pengembalian.petugas' ke dalam with()
+        $peminjamans = Peminjaman::with(['user', 'detailPinjams.alat', 'pengembalian.petugas'])
             ->whereBetween('tgl_pinjam', [$dari, $sampai])
             ->when($status, fn($q) => $q->where('status', $status))
-            ->latest()->get();
+            ->latest()
+            ->get();
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('laporan.pdf', compact('peminjamans', 'dari', 'sampai', 'status'))
-            ->setPaper('a4', 'landscape');
-
-        return $pdf->download('laporan-peminjaman-'.$dari.'-'.$sampai.'.pdf');
+        // Pastikan mengarahkan ke view cetak PDF (misal: petugas.laporan.pdf)
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('petugas.laporan.pdf', compact('peminjamans', 'dari', 'sampai', 'status'));
+        
+        return $pdf->stream('Laporan-Peminjaman-' . $dari . '-sampai-' . $sampai . '.pdf');
     }
 }
