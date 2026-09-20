@@ -122,7 +122,7 @@ class PetugasController extends Controller
                     'denda' => $totalDenda,
                     'petugas_id' => auth()->id(),
                 ]);
-                $peminjaman->update(['status' => $statusPeminjaman]);
+                $peminjaman->update(['status' => 'diproses']);
                 foreach ($peminjaman->detailPinjams as $detail) {
                     $alat = Alat::lockForUpdate()->find($detail->alat_id);
                     if ($alat) {
@@ -135,6 +135,23 @@ class PetugasController extends Controller
         } catch (Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
+    }
+
+    public function approvePengembalian(Pengembalian $pengembalian)
+    {
+        $peminjaman = Peminjaman::find($pengembalian->peminjaman_id);
+
+        // Hitung telat seperti di store
+        $statusBaru = (now()->gt($peminjaman->tgl_kembali_plan)) ? 'telat' : 'dikembalikan';
+
+        $peminjaman->update(['status' => $statusBaru]);
+
+        // Kembalikan stok
+        foreach ($peminjaman->detailPinjam as $d) {
+            Alat::find($d->alat_id)->increment('stok', $d->jumlah);
+        }
+
+        return redirect()->back()->with('success', 'Pengembalian dikonfirmasi.');
     }
 
     public function dashboard()
