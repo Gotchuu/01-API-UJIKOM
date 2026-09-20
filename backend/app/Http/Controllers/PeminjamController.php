@@ -130,6 +130,21 @@ class PeminjamController extends Controller
         return redirect()->route('peminjam.katalog')->with('success', 'Pengajuan dibatalkan.');
     }
 
+    // Peminjam mengajukan pengembalian alat
+public function ajukanPengembalian(Request $request, Peminjaman $peminjaman)
+{
+    $user = auth()->user();
+
+    if ($peminjaman->user_id !== $user->id || !in_array($peminjaman->status, ['dipinjam', 'telat'])) {
+        return redirect()->back()->with('error', 'Transaksi tidak dapat diajukan untuk pengembalian.');
+    }
+
+    $peminjaman->update([
+        'status' => 'menunggu_kembali'
+    ]);
+
+    return redirect()->route('peminjam.riwayat')->with('success', 'Pengajuan pengembalian berhasil dikirim! Silakan serahkan fisik barang ke Petugas.');
+    }
     // Method Dashboard Peminjam
     public function dashboard()
     {
