@@ -68,6 +68,7 @@ Route::middleware(['auth', 'role:petugas'])->prefix('petugas')->name('petugas.')
     Route::get('/laporan/cetak', [PetugasController::class, 'cetakPdf'])->name('laporan.cetak')->middleware('role:petugas');
     Route::get('/pesan', [PetugasController::class, 'indexPesan'])->name('pesan.index'); // BARU
     Route::post('/pesan-perbaikan', [PetugasController::class, 'storePesanPerbaikan'])->name('pesan.store');
+    Route::post('/pengembalian/{pengembalian}/approve', [PetugasController::class, 'approvePengembalian'])->name('pengembalian.approve');
     
 });
 // Peminjam
