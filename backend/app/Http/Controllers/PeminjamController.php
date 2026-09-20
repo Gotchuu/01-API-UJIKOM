@@ -116,7 +116,11 @@ class PeminjamController extends Controller
     public function destroyPeminjaman(Peminjaman $peminjaman)
     {
         $user = auth()->user();
-        if ($user->id !== $peminjaman->user_id || $peminjaman->status !== 'diajukan') {
+        if ($peminjaman->user_id !== $user->id) {
+        return redirect()->back()->with('error', 'Akses ditolak.');
+        }
+
+        if ($peminjaman->status !== 'diajukan' && $peminjaman->status !== 'diproses') {
             return redirect()->back()->with('error', 'Tidak dapat dibatalkan.');
         }
         DB::transaction(function () use ($peminjaman) {
