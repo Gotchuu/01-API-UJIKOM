@@ -74,32 +74,41 @@
                                 </span>
                             </td>
                             <td class="py-3 px-4 border-b">
-                                <div class="flex flex-col space-y-2">
-                                    @if($peminjaman->status == 'dipinjam')
-                                        <button onclick="openModalPengembalian({{ json_encode($peminjaman) }})" 
-                                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs font-semibold transition text-center">
-                                            Proses Pengembalian
-                                        </button>
-                                    @else
-                                        <form action="{{ route('admin.peminjaman.updateStatus', $peminjaman->id) }}" method="POST">
-                                            @csrf
-                                            @method('PUT')
-                                            <select name="status" onchange="if(confirm('Yakin ubah status menjadi \'' + this.options[this.selectedIndex].text + '\'?')) this.form.submit(); else this.value = '{{ $peminjaman->status }}';" class="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none w-full">
-                                                <option value="diajukan" {{ $peminjaman->status == 'diajukan' ? 'selected' : '' }}>Diajukan</option>
-                                                <option value="dipinjam" {{ $peminjaman->status == 'dipinjam' ? 'selected' : '' }}>Dipinjam</option>
-                                                <option value="dikembalikan" {{ $peminjaman->status == 'dikembalikan' ? 'selected' : '' }}>Dikembalikan</option>
-                                                <option value="telat" {{ $peminjaman->status == 'telat' ? 'selected' : '' }}>Telat</option>
-                                            </select>
-                                        </form>
-                                    @endif
+    <div class="flex flex-col space-y-2">
+        {{-- Jika status masih DIPINJAM, wajib gunakan Modal Pengembalian --}}
+        @if($peminjaman->status == 'dipinjam')
+            <button onclick="openModalPengembalian({{ json_encode($peminjaman) }})" 
+                class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs font-semibold transition text-center shadow-sm">
+                Proses Pengembalian
+            </button>
+            
+        {{-- Jika status DIAJUKAN, Admin bisa menyetujui langsung via Dropdown atau tombol --}}
+        @elseif($peminjaman->status == 'diajukan')
+            <form action="{{ route('admin.peminjaman.updateStatus', $peminjaman->id) }}" method="POST">
+                @csrf
+                @method('PUT')
+                <select name="status" onchange="if(confirm('Yakin ingin menyetujui dan mengubah status menjadi \'' + this.options[this.selectedIndex].text + '\'?')) this.form.submit(); else this.value = '{{ $peminjaman->status }}';" 
+                    class="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none w-full bg-amber-50 font-medium text-amber-900">
+                    <option value="diajukan" selected>Diajukan</option>
+                    <option value="dipinjam">Setujui (Dipinjam)</option>
+                </select>
+            </form>
+            
+        {{-- Jika status sudah DIKEMBALIKAN / TELAT, tampilkan badge status final (tidak bisa diubah dari dropdown) --}}
+        @else
+            <span class="text-xs text-gray-500 italic text-center py-1">Transaksi Selesai</span>
+        @endif
 
-                                    <form action="{{ route('admin.peminjaman.destroy', $peminjaman->id) }}" method="POST" onsubmit="return confirm('Yakin menghapus data ini?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold transition w-full">Hapus</button>
-                                    </form>
-                                </div>
-                            </td>
+        {{-- Tombol Hapus (Soft/Hard Delete) --}}
+        <form action="{{ route('admin.peminjaman.destroy', $peminjaman->id) }}" method="POST" onsubmit="return confirm('Yakin menghapus data transaksi ini?')">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold transition w-full shadow-sm">
+                Hapus
+            </button>
+        </form>
+    </div>
+</td>
                         </tr>
                     @empty
                         <tr>
