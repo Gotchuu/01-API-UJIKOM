@@ -267,7 +267,8 @@ class AdminController extends Controller
     public function storeKategori(Request $request)
     {
         $request->validate([
-            'nama_kategori' => 'required|string|max:255|unique:kategoris,nama_kategori',
+            // UBAH 'kategoris' MENJADI 'kategori'
+            'nama_kategori' => 'required|string|max:255|unique:kategori,nama_kategori',
         ]);
 
         Kategori::create([
@@ -288,17 +289,17 @@ class AdminController extends Controller
     // 5. Memperbarui kategori
     public function updateKategori(Request $request, $id)
     {
-        $kategori = Kategori::findOrFail($id);
+    $request->validate([
+        // UBAH 'kategoris' MENJADI 'kategori'
+        'nama_kategori' => 'required|string|max:255|unique:kategori,nama_kategori,' . $id,
+    ]);
 
-        $request->validate([
-            'nama_kategori' => 'required|string|max:255|unique:kategori,nama_kategori,'.$id,
-        ]);
+    $kategori = Kategori::findOrFail($id);
+    $kategori->update([
+        'nama_kategori' => $request->nama_kategori,
+    ]);
 
-        $kategori->update([
-            'nama_kategori' => $request->nama_kategori,
-        ]);
-
-        return redirect()->route('admin.kategori.index')->with('success', 'Kategori berhasil diperbarui.');
+    return redirect()->route('admin.kategori.index')->with('success', 'Kategori berhasil diperbarui.');
     }
 
     // 6. Menghapus kategori
@@ -411,12 +412,13 @@ class AdminController extends Controller
         return view('admin.peminjaman.show', compact('peminjaman'));
     }
 
-    // 5. Mengubah status peminjaman (Persetujuan / Pengembalian / Penolakan)
     // 5. Mengubah status peminjaman
+    // Mengubah status peminjaman (Khusus Persetujuan Awal)
     public function updateStatusPeminjaman(Request $request, $id)
     {
+        // Batasi status yang boleh diubah via method ini hanya sampai 'dipinjam'
         $request->validate([
-            'status' => 'required|in:diajukan,dipinjam,dikembalikan,telat',
+            'status' => 'required|in:diajukan,dipinjam',
         ]);
 
         DB::beginTransaction();
@@ -425,28 +427,30 @@ class AdminController extends Controller
             $statusLama = $peminjaman->status;
             $statusBaru = $request->status;
 
-            // 1. Jika status berubah jadi "dipinjam" -> Kurangi stok alat
-            if ($statusBaru == 'dipinjam' && $statusLama != 'dipinjam') {
+            // Cegah jika transaksi sudah selesai/dalam pengembalian
+            if (in_array($statusLama, ['dikembalikan', 'telat'])) {
+                throw new \Exception("Transaksi yang sudah selesai tidak dapat diubah statusnya.");
+            }
+
+            // Jika status berubah dari 'diajukan' menjadi 'dipinjam' -> Kurangi stok alat
+            if ($statusBaru == 'dipinjam' && $statusLama == 'diajukan') {
+
+                // Matikan log mentah AlatObserver agar tidak mencatat log ganda
+                app()->instance('skip_alat_log', true);
+
                 foreach ($peminjaman->detailPinjams as $detail) {
-                    $alat = Alat::findOrFail($detail->alat_id);
+                    $alat = Alat::lockForUpdate()->findOrFail($detail->alat_id);
+                    
                     if ($alat->stok < $detail->jumlah) {
                         throw new \Exception("Stok alat '{$alat->nama_alat}' tidak mencukupi.");
                     }
-                    $alat->stok -= $detail->jumlah;
-                    $alat->save();
+
+                    // Kurangi stok alat secara aman
+                    $alat->decrement('stok', $detail->jumlah);
                 }
             }
 
-            // 2. Jika status berubah jadi "dikembalikan" dari "dipinjam" atau "telat" -> Kembalikan stok alat
-            if ($statusBaru == 'dikembalikan' && in_array($statusLama, ['dipinjam', 'telat'])) {
-                foreach ($peminjaman->detailPinjams as $detail) {
-                    $alat = Alat::findOrFail($detail->alat_id);
-                    $alat->stok += $detail->jumlah;
-                    $alat->save();
-                }
-            }
-
-            // Update status di database
+            // Update status peminjaman di database
             $peminjaman->update(['status' => $statusBaru]);
 
             DB::commit();
@@ -560,26 +564,37 @@ class AdminController extends Controller
         try {
             $pengembalian = Pengembalian::findOrFail($id);
 
-            // 1. Cari data peminjaman terkait
-            $peminjaman = Peminjaman::find($pengembalian->peminjaman_id);
+            // 1. Cari data peminjaman terkait beserta detail alatnya
+            $peminjaman = Peminjaman::with('detailPinjams')->find($pengembalian->peminjaman_id);
 
             if ($peminjaman) {
-                // 2. Ubah status peminjaman kembali menjadi 'dipinjam'
+                // Matikan log mentah AlatObserver agar tidak ganda
+                app()->instance('skip_alat_log', true);
+
+                // 2. Kurangi stok alat kembali (karena status balik ke 'dipinjam')
+                foreach ($peminjaman->detailPinjams as $detail) {
+                    $alat = Alat::lockForUpdate()->find($detail->alat_id);
+                    if ($alat) {
+                        $alat->decrement('stok', $detail->jumlah);
+                    }
+                }
+
+                // 3. Ubah status peminjaman kembali menjadi 'dipinjam'
                 $peminjaman->update([
                     'status' => 'dipinjam',
                 ]);
             }
 
-            // 3. Hapus data pengembalian
+            // 4. Hapus data pengembalian dari database
             $pengembalian->delete();
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Data pengembalian berhasil dihapus dan status peminjaman dikembalikan menjadi Dipinjam.');
-        } catch (Exception $e) {
+            return redirect()->back()->with('success', 'Data pengembalian berhasil dibatalkan, status kembali Dipinjam, dan stok alat berhasil dikurangi!');
+        } catch (\Exception $e) {
             DB::rollback();
 
-            return redirect()->back()->with('error', 'Gagal menghapus data: '.$e->getMessage());
+            return redirect()->back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
         }
     }
 
