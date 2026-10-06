@@ -21,14 +21,13 @@
             <h3 class="text-lg font-bold text-gray-800">Daftar Transaksi Saya</h3>
             
             <div class="flex items-center gap-3 w-full md:w-auto">
-                <!-- Form Filter Status -->
-                <form action="{{ route('peminjam.riwayat') }}" method="GET" class="w-full md:w-48">
+                <form action="{{ route('peminjam.riwayat') }}" method="GET" class="w-full md:w-56">
                     <select name="status" onchange="this.form.submit()" class="w-full text-sm border border-gray-300 rounded-lg p-2 focus:ring-blue-500">
                         <option value="">-- Semua Status --</option>
                         <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Diajukan</option>
                         <option value="dipinjam" {{ request('status') == 'dipinjam' ? 'selected' : '' }}>Dipinjam</option>
+                        <option value="menunggu_kembali" {{ request('status') == 'menunggu_kembali' ? 'selected' : '' }}>Menunggu Cek</option>
                         <option value="dikembalikan" {{ request('status') == 'dikembalikan' ? 'selected' : '' }}>Dikembalikan</option>
-                        <option value="telat" {{ request('status') == 'telat' ? 'selected' : '' }}>Telat</option>
                     </select>
                 </form>
 
@@ -75,15 +74,33 @@
                                 </ul>
                             </td>
 
-                            <!-- Status Transaksi -->
+                            <!-- Status Transaksi Dinamis -->
                             <td class="py-3 px-4 border-b text-center">
-                                <span class="px-2.5 py-1 text-xs font-semibold rounded-full
-                                    @if($item->status == 'diajukan') bg-amber-100 text-amber-800
-                                    @elseif($item->status == 'dipinjam') bg-blue-100 text-blue-800
-                                    @elseif($item->status == 'dikembalikan') bg-emerald-100 text-emerald-800
-                                    @else bg-red-100 text-red-800 @endif">
-                                    {{ ucfirst($item->status) }}
-                                </span>
+                                @if($item->pengembalian || $item->status == 'dikembalikan')
+                                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                                        Dikembalikan
+                                    </span>
+                                @elseif($item->status == 'menunggu_kembali')
+                                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
+                                        Menunggu Cek
+                                    </span>
+                                @elseif($item->is_telat)
+                                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                        Telat Dipinjam
+                                    </span>
+                                @elseif($item->status == 'dipinjam')
+                                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        Dipinjam
+                                    </span>
+                                @elseif($item->status == 'diajukan')
+                                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
+                                        Diajukan
+                                    </span>
+                                @else
+                                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                        {{ ucfirst($item->status) }}
+                                    </span>
+                                @endif
                             </td>
 
                             <!-- Info Denda & Kondisi -->
@@ -102,8 +119,9 @@
                                 @endif
                             </td>
 
-                            <!-- Tombol Aksi -->
+                            <!-- Tombol Aksi Kunci -->
                             <td class="py-3 px-4 border-b text-center">
+                                {{-- 1. Jika masih diajukan --}}
                                 @if($item->status == 'diajukan')
                                     <form action="{{ route('peminjam.peminjaman.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Yakin ingin membatalkan pengajuan ini?')">
                                         @csrf
@@ -112,14 +130,31 @@
                                             Batalkan
                                         </button>
                                     </form>
+
+                                {{-- 2. HANYA tampilkan tombol Kembalikan jika BELUM ada record pengembalian & statusnya dipinjam --}}
+                                @elseif(!$item->pengembalian && $item->status == 'dipinjam')
+                                    <form action="{{ route('peminjam.peminjaman.ajukanPengembalian', $item->id) }}" method="POST" onsubmit="return confirm('Apakah Anda ingin mengembalikan alat ini ke Petugas?')">
+                                        @csrf
+                                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded text-xs font-semibold transition shadow-sm">
+                                            Kembalikan Alat
+                                        </button>
+                                    </form>
+
+                                {{-- 3. Jika sedang menunggu verifikasi --}}
+                                @elseif($item->status == 'menunggu_kembali')
+                                    <span class="px-2.5 py-1 text-[11px] font-bold rounded-full bg-amber-100 text-amber-800">
+                                        Menunggu Cek Petugas
+                                    </span>
+
+                                {{-- 4. Jika SUDAH DIKEMBALIKAN --}}
                                 @else
-                                    <span class="text-xs text-gray-400 italic">-</span>
+                                    <span class="text-xs text-gray-400 italic font-medium">Selesai</span>
                                 @endif
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="py-6 text-center text-gray-500">Belum ada riwayat transaksi peminjaman.</td>
+                            <td colspan="5" class="py-6 text-center text-gray-500 text-xs">Belum ada riwayat transaksi peminjaman.</td>
                         </tr>
                     @endforelse
                 </tbody>
