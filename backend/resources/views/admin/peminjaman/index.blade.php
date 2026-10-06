@@ -21,7 +21,7 @@
         <div class="p-5 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
             <h3 class="text-lg font-bold text-gray-800">Daftar Transaksi Peminjaman</h3>
             <div class="flex items-center gap-3 w-full md:w-auto">
-                                <form action="{{ route('admin.peminjaman.index') }}" method="GET" class="flex w-full md:w-80">
+                <form action="{{ route('admin.peminjaman.index') }}" method="GET" class="flex w-full md:w-80">
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama peminjam / status.."
                         class="w-full px-3 py-2 text-sm border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 text-sm font-semibold rounded-r-lg transition">Cari</button>
@@ -64,51 +64,73 @@
                                     <div><span class="text-gray-500">Rencana:</span> {{ $peminjaman->tgl_kembali_plan }}</div>
                                 </div>
                             </td>
+                            
+                            <!-- Status Dinamis Admin -->
                             <td class="py-3 px-4 border-b">
-                                <span class="px-2.5 py-1 text-xs font-semibold rounded-full
-                                    @if($peminjaman->status == 'diajukan') bg-amber-100 text-amber-800
-                                    @elseif($peminjaman->status == 'dipinjam') bg-blue-100 text-blue-800
-                                    @elseif($peminjaman->status == 'dikembalikan') bg-emerald-100 text-emerald-800
-                                    @else bg-red-100 text-red-800 @endif">
-                                    {{ ucfirst($peminjaman->status) }}
-                                </span>
+                                @if($peminjaman->pengembalian || $peminjaman->status == 'dikembalikan')
+                                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                                        Dikembalikan
+                                    </span>
+                                @elseif($peminjaman->is_telat)
+                                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800" title="Melewati batas tanggal rencana kembali">
+                                        Telat Dipinjam
+                                    </span>
+                                @elseif($peminjaman->status == 'dipinjam')
+                                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        Dipinjam
+                                    </span>
+                                @elseif($peminjaman->status == 'diajukan')
+                                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
+                                        Diajukan
+                                    </span>
+                                @else
+                                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                        {{ ucfirst($peminjaman->status) }}
+                                    </span>
+                                @endif
                             </td>
-                            <td class="py-3 px-4 border-b">
-    <div class="flex flex-col space-y-2">
-        {{-- Jika status masih DIPINJAM, wajib gunakan Modal Pengembalian --}}
-        @if($peminjaman->status == 'dipinjam')
-            <button onclick="openModalPengembalian({{ json_encode($peminjaman) }})" 
-                class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs font-semibold transition text-center shadow-sm">
-                Proses Pengembalian
-            </button>
-            
-        {{-- Jika status DIAJUKAN, Admin bisa menyetujui langsung via Dropdown atau tombol --}}
-        @elseif($peminjaman->status == 'diajukan')
-            <form action="{{ route('admin.peminjaman.updateStatus', $peminjaman->id) }}" method="POST">
-                @csrf
-                @method('PUT')
-                <select name="status" onchange="if(confirm('Yakin ingin menyetujui dan mengubah status menjadi \'' + this.options[this.selectedIndex].text + '\'?')) this.form.submit(); else this.value = '{{ $peminjaman->status }}';" 
-                    class="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none w-full bg-amber-50 font-medium text-amber-900">
-                    <option value="diajukan" selected>Diajukan</option>
-                    <option value="dipinjam">Setujui (Dipinjam)</option>
-                </select>
-            </form>
-            
-        {{-- Jika status sudah DIKEMBALIKAN / TELAT, tampilkan badge status final (tidak bisa diubah dari dropdown) --}}
-        @else
-            <span class="text-xs text-gray-500 italic text-center py-1">Transaksi Selesai</span>
-        @endif
 
-        {{-- Tombol Hapus (Soft/Hard Delete) --}}
-        <form action="{{ route('admin.peminjaman.destroy', $peminjaman->id) }}" method="POST" onsubmit="return confirm('Yakin menghapus data transaksi ini?')">
-            @csrf
-            @method('DELETE')
-            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold transition w-full shadow-sm">
-                Hapus
-            </button>
-        </form>
-    </div>
-</td>
+                            <td class="py-3 px-4 border-b">
+                                <div class="flex flex-col space-y-2">
+                                    {{-- HANYA jika BELUM ada data pengembalian & statusnya dipinjam --}}
+                                    @if(!$peminjaman->pengembalian && $peminjaman->status == 'dipinjam')
+                                        <button onclick="openModalPengembalian({{ json_encode($peminjaman) }})" 
+                                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs font-semibold transition text-center shadow-sm">
+                                            Proses Pengembalian
+                                        </button>
+                                        
+                                    {{-- Jika status DIAJUKAN --}}
+                                    @elseif($peminjaman->status == 'diajukan')
+                                        <button onclick="openModalEditRequest({{ json_encode($peminjaman) }})" 
+                                            class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded text-xs font-semibold transition text-center shadow-sm w-full">
+                                            ✏️ Edit Request
+                                        </button>
+
+                                        <form action="{{ route('admin.peminjaman.updateStatus', $peminjaman->id) }}" method="POST">
+                                            @csrf
+                                            @method('PUT')
+                                            <select name="status" onchange="if(confirm('Yakin ingin menyetujui peminjaman ini?')) this.form.submit(); else this.value = '{{ $peminjaman->status }}';" 
+                                                class="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none w-full bg-amber-50 font-medium text-amber-900 mt-1">
+                                                <option value="diajukan" selected>Diajukan</option>
+                                                <option value="dipinjam">Setujui (Dipinjam)</option>
+                                            </select>
+                                        </form>
+
+                                    {{-- Jika SUDAH DIKEMBALIKAN --}}
+                                    @else
+                                        <span class="text-xs text-gray-500 italic text-center py-1">Transaksi Selesai</span>
+                                    @endif
+
+                                    {{-- Tombol Hapus --}}
+                                    <form action="{{ route('admin.peminjaman.destroy', $peminjaman->id) }}" method="POST" onsubmit="return confirm('Yakin menghapus data transaksi ini?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold transition w-full shadow-sm">
+                                            Hapus
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
                         </tr>
                     @empty
                         <tr>
@@ -120,6 +142,8 @@
         </div>
         <div class="p-4 border-t border-gray-200 bg-gray-50">{{ $peminjamans->links() }}</div>
     </div>
+    
+    {{-- =================================================================================================== --}}
 
     {{-- MODAL PROCESS PENGEMBALIAN --}}
     <div id="modalPengembalian" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
@@ -129,32 +153,26 @@
                 <button onclick="closeModalPengembalian()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
             </div>
 
-                        <form action="{{ route('admin.pengembalian.store') }}" method="POST">
+            <form action="{{ route('admin.pengembalian.store') }}" method="POST">
                 @csrf
                 <input type="hidden" name="peminjaman_id" id="modal_peminjaman_id">
 
-                <!-- Informasi Nama Peminjam -->
                 <div class="mb-3">
                     <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Nama Peminjam</label>
                     <input type="text" id="modal_peminjam_name" class="w-full text-sm bg-gray-100 border border-gray-300 rounded-lg p-2.5 text-gray-700 font-semibold" readonly>
                 </div>
 
-                <!-- DETAIL ALAT YANG DIPINJAM -->
                 <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
                     <label class="block text-xs font-bold text-gray-700 uppercase mb-2">Daftar Alat yang Dipinjam:</label>
-                    <ul id="modal_detail_alat_list" class="list-disc pl-5 space-y-1 text-xs text-gray-800">
-                        {{-- Diisi secara otomatis oleh JavaScript --}}
-                    </ul>
+                    <ul id="modal_detail_alat_list" class="list-disc pl-5 space-y-1 text-xs text-gray-800"></ul>
                 </div>
 
-                <!-- Tanggal Pengembalian -->
                 <div class="mb-4">
                     <label class="block text-sm font-semibold text-gray-700 mb-1">Tanggal Pengembalian</label>
                     <input type="date" name="tgl_kembali" id="modal_tgl_kembali" value="{{ date('Y-m-d') }}" 
                         onchange="hitungDendaOtomatis()" class="w-full text-sm border border-gray-300 rounded-lg p-2.5 focus:ring-blue-500" required>
                 </div>
 
-                <!-- Kondisi Kembali -->
                 <div class="mb-4">
                     <label class="block text-sm font-semibold text-gray-700 mb-1">Kondisi Barang</label>
                     <select name="kondisi_kembali" id="modal_kondisi_kembali" onchange="toggleFormDendaKondisi()" class="w-full text-sm border border-gray-300 rounded-lg p-2.5 focus:ring-blue-500" required>
@@ -165,19 +183,16 @@
                     </select>
                 </div>
 
-                <!-- Input Deskripsi Kerusakan / Kehilangan (Tampil Jika Rusak / Hilang) -->
                 <div id="wrapper_deskripsi_kondisi" class="mb-4 hidden">
                     <label class="block text-sm font-semibold text-gray-700 mb-1">Deskripsi Kerusakan / Catatan Kehilangan</label>
                     <textarea name="deskripsi_kondisi" id="modal_deskripsi_kondisi" rows="3" placeholder="Jelaskan detail kerusakan atau kronologi kehilangan barang..." class="w-full text-sm border border-gray-300 rounded-lg p-2.5 focus:ring-blue-500"></textarea>
                 </div>
 
-                <!-- Denda Keterlambatan Info -->
                 <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900">
                     <div><strong>Estimasi Denda Telat:</strong> <span id="text_denda_telat">Rp 0</span></div>
                     <div class="text-gray-500 mt-0.5">* Tarik denda Rp 1.000 / hari keterlambatan</div>
                 </div>
 
-                <!-- Form Denda Kondisi (Tampil Jika Rusak / Hilang) -->
                 <div id="wrapper_denda_kondisi" class="mb-4 hidden">
                     <label class="block text-sm font-semibold text-gray-700 mb-1">Denda Kerusakan / Kehilangan (Rp)</label>
                     <input type="number" name="denda_kondisi" id="modal_denda_kondisi" min="0" value="0" placeholder="Masukkan denda alat" class="w-full text-sm border border-gray-300 rounded-lg p-2.5 focus:ring-blue-500">
@@ -191,6 +206,68 @@
         </div>
     </div>
 
+    {{-- MODAL EDIT REQUEST PEMINJAMAN ADMIN --}}
+    <div id="modalEditRequest" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-gray-200 mb-4">
+                <h4 class="text-lg font-bold text-gray-800">Edit Pengajuan Peminjaman</h4>
+                <button onclick="closeModalEditRequest()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
+            </div>
+
+            <form id="formEditRequest" method="POST">
+                @csrf
+                @method('PUT')
+
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Peminjam</label>
+                    <input type="text" id="edit_peminjam_name" class="w-full text-sm bg-gray-100 border border-gray-300 rounded-lg p-2.5 text-gray-700 font-semibold" readonly>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Tgl Pinjam</label>
+                        <input type="date" name="tgl_pinjam" id="edit_tgl_pinjam" class="w-full text-sm border border-gray-300 rounded-lg p-2 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Rencana Kembali</label>
+                        <input type="date" name="tgl_kembali_plan" id="edit_tgl_kembali_plan" class="w-full text-sm border border-gray-300 rounded-lg p-2 focus:ring-blue-500" required>
+                    </div>
+                </div>
+
+                {{-- Daftar Alat Saat Ini --}}
+                <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <label class="block text-xs font-bold text-amber-900 uppercase mb-2">Daftar Alat yang Dipinjam:</label>
+                    <div id="wrapper_detail_alat_edit" class="space-y-2"></div>
+                </div>
+
+                {{-- Form Tambah Alat Baru --}}
+                <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <label class="block text-xs font-bold text-blue-900 uppercase mb-2">+ Tambah Item Alat Baru (Opsional)</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="col-span-2">
+                            <select name="new_alat_id" class="w-full text-xs border border-gray-300 rounded p-2 focus:ring-blue-500">
+                                <option value="">-- Pilih Alat Tambahan --</option>
+                                @if(isset($allAlats))
+                                    @foreach($allAlats as $a)
+                                        <option value="{{ $a->id }}">{{ $a->nama_alat }} (Stok: {{ $a->stok }})</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                        </div>
+                        <div>
+                            <input type="number" name="new_jumlah" placeholder="Jml" min="1" class="w-full text-xs border border-gray-300 rounded p-2 text-center font-bold">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t border-gray-200">
+                    <button type="button" onclick="closeModalEditRequest()" class="px-4 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 font-semibold">Batal</button>
+                    <button type="submit" class="px-4 py-2 text-sm bg-amber-600 hover:bg-amber-700 rounded-lg text-white font-semibold">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         let tglPlanGlobal = '';
 
@@ -199,7 +276,6 @@
             document.getElementById('modal_peminjam_name').value = peminjaman.user ? peminjaman.user.name : 'N/A';
             tglPlanGlobal = peminjaman.tgl_kembali_plan;
 
-            // Render Rincian Detail Alat ke Modal
             const listContainer = document.getElementById('modal_detail_alat_list');
             listContainer.innerHTML = '';
 
@@ -263,6 +339,41 @@
             } else {
                 document.getElementById('text_denda_telat').innerText = 'Rp 0 (Tepat Waktu)';
             }
+        }
+
+        function openModalEditRequest(peminjaman) {
+            document.getElementById('formEditRequest').action = "/admin/peminjaman/" + peminjaman.id + "/edit-request";
+            document.getElementById('edit_peminjam_name').value = peminjaman.user ? peminjaman.user.name : 'N/A';
+            document.getElementById('edit_tgl_pinjam').value = peminjaman.tgl_pinjam;
+            document.getElementById('edit_tgl_kembali_plan').value = peminjaman.tgl_kembali_plan;
+
+            const wrapper = document.getElementById('wrapper_detail_alat_edit');
+            wrapper.innerHTML = '';
+
+            if (peminjaman.detail_pinjams && peminjaman.detail_pinjams.length > 0) {
+                peminjaman.detail_pinjams.forEach(detail => {
+                    const namaAlat = detail.alat ? detail.alat.nama_alat : 'Alat Dihapus';
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center justify-between text-xs bg-white p-2 rounded border border-amber-200';
+                    div.innerHTML = `
+                        <span class="font-semibold text-gray-800">${namaAlat}</span>
+                        <div class="flex items-center gap-2">
+                            <label class="text-gray-500">Jumlah:</label>
+                            <input type="number" name="jumlah[${detail.id}]" value="${detail.jumlah}" min="1" class="w-16 p-1 border border-gray-300 rounded text-center font-bold">
+                            <a href="/admin/peminjaman/detail/${detail.id}" onclick="return confirm('Hapus alat ini dari daftar pengajuan?')" class="text-red-600 hover:text-red-800 font-bold ml-1" title="Hapus Item">&times;</a>
+                        </div>
+                    `;
+                    wrapper.appendChild(div);
+                });
+            }
+
+            document.getElementById('modalEditRequest').classList.remove('hidden');
+            document.getElementById('modalEditRequest').classList.add('flex');
+        }
+
+        function closeModalEditRequest() {
+            document.getElementById('modalEditRequest').classList.add('hidden');
+            document.getElementById('modalEditRequest').classList.remove('flex');
         }
     </script>
 @endsection
