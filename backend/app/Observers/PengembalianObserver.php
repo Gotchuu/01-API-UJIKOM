@@ -2,62 +2,77 @@
 
 namespace App\Observers;
 
-use App\Models\LogAktivitas;
 use App\Models\Pengembalian;
-use Carbon\Carbon;
+use App\Models\LogAktivitas;
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
+use Illuminate\Support\Facades\Auth;
 
 class PengembalianObserver implements ShouldHandleEventsAfterCommit
 {
-    /**
-     * Otomatis tergolong saat Pengembalian baru dibuat via API
-     */
+    private function catatLog(string $pesan): void
+    {
+        $userId = Auth::id() ?? auth()->id();
+        if ($userId) {
+            LogAktivitas::create([
+                'user_id' => $userId,
+                'aktivitas' => $pesan,
+            ]);
+        }
+    }
+
     public function created(Pengembalian $pengembalian): void
     {
-        LogAktivitas::create([
-            'user_id' => auth()->id() ?? $pengembalian->petugas_id,
-            'aktivitas' => "Memproses pengembalian peminjaman ID: #{$pengembalian->peminjaman_id} dengan status kondisi: {$pengembalian->kondisi_kembali}.",
-        ]);
+        $peminjaman = $pengembalian->peminjaman;
+        $namaPeminjam = $peminjaman->user->name ?? 'User';
+        
+        $rincianAlat = $peminjaman->detailPinjams->map(function ($d) {
+            $namaAlat = $d->alat->nama_alat ?? 'Alat';
+            return "{$namaAlat} (+{$d->jumlah} stok)";
+        })->join(', ');
+
+        $infoDenda = $pengembalian->denda > 0 ? " Denda: Rp " . number_format($pengembalian->denda, 0, ',', '.') : " Bebas denda.";
+
+        $this->catatLog("Memverifikasi pengembalian alat dari {$namaPeminjam} (ID Transaksi: #{$peminjaman->id}). Kondisi: '{$pengembalian->kondisi_kembali}'. Barang dikembalikan: {$rincianAlat}.{$infoDenda}");
     }
 
     /**
-     * Hanya log kalau ada perubahan penting (kondisi/denda/tgl_kembali)
+     * Dipanggil otomatis saat data pengembalian di-reset / dihapus.
      */
-    public function updated(Pengembalian $pengembalian): void
+        public function deleted(Pengembalian $pengembalian): void
     {
-        $changes = $pengembalian->getChanges();
-        unset($changes['updated_at'], $changes['created_at']);
+        $peminjaman = $pengembalian->peminjaman;
 
-        if (empty($changes)) {
-            return;
-        }
+        if ($peminjaman) {
+            // 1. Validasi Stok: Cek apakah stok alat mencukupi untuk dipotong kembali
+            foreach ($peminjaman->detailPinjams as $d) {
+                if ($d->alat) {
+                    // Jika stok alat saat ini lebih kecil dari Qty yang dulu dipinjam
+                    if ($d->alat->stok < $d->jumlah) {
+                        $namaAlat = $d->alat->nama_alat ?? 'Alat';
+                        // Lempar Exception agar DB::rollBack() di Controller berjalan!
+                        throw new \Exception("Gagal reset pengembalian: Stok '{$namaAlat}' saat ini tinggal {$d->alat->stok} unit (dibutuhkan {$d->jumlah} unit untuk di-reset).");
+                    }
+                }
+            }
 
-        if (! $pengembalian->wasChanged(['kondisi_kembali', 'denda', 'tgl_kembali'])) {
-            return;
-        }
+            // 2. Jika semua stok alat aman/cukup, lakukan pemotongan stok
+            foreach ($peminjaman->detailPinjams as $d) {
+                if ($d->alat) {
+                    $d->alat->decrement('stok', $d->jumlah);
+                }
+            }
 
-        $details = [];
-        if ($pengembalian->wasChanged('kondisi_kembali')) {
-            $old = $pengembalian->getOriginal('kondisi_kembali');
-            $new = $pengembalian->kondisi_kembali;
-            $details[] = "kondisi: '{$old}' -> '{$new}'";
-        }
-        if ($pengembalian->wasChanged('denda')) {
-            $old = $pengembalian->getOriginal('denda');
-            $new = $pengembalian->denda;
-            $details[] = "denda: Rp{$old} -> Rp{$new}";
-        }
-        if ($pengembalian->wasChanged('tgl_kembali')) {
-            $old = $pengembalian->getOriginal('tgl_kembali');
-            $new = $pengembalian->tgl_kembali instanceof Carbon ? $pengembalian->tgl_kembali->format('Y-m-d') : $pengembalian->tgl_kembali;
-            $details[] = "tgl_kembali: '{$old}' -> '{$new}'";
-        }
+            // 3. Ubah status peminjaman kembali menjadi 'dipinjam'
+            $peminjaman->update(['status' => 'dipinjam']);
 
-        $perubahan = implode(', ', $details);
+            $namaPeminjam = $peminjaman->user->name ?? 'User';
+            $rincianAlat = $peminjaman->detailPinjams->map(function ($d) {
+                $namaAlat = $d->alat->nama_alat ?? 'Alat';
+                return "{$namaAlat} (-{$d->jumlah} stok)";
+            })->join(', ');
 
-        LogAktivitas::create([
-            'user_id' => auth()->id() ?? $pengembalian->petugas_id,
-            'aktivitas' => "Mengubah data pengembalian ID: #{$pengembalian->id} (Peminjaman #{$pengembalian->peminjaman_id}) - {$perubahan}",
-        ]);
+            // 4. Catat Log Aktivitas
+            $this->catatLog("Reset pengembalian alat milik {$namaPeminjam} (ID Transaksi: #{$peminjaman->id}). Status dikembalikan menjadi 'dipinjam' dan penyesuaian stok alat: {$rincianAlat}.");
+        }
     }
 }

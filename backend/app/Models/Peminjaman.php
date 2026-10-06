@@ -6,9 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Carbon\Carbon;
 
 class Peminjaman extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'peminjaman';
 
     protected $fillable = [
@@ -26,18 +30,27 @@ class Peminjaman extends Model
         ];
     }
 
+    // --- ACCESSOR LOKAL UNTUK CEK KETERLAMBATAN ---
+    public function getIsTelatAttribute(): bool
+    {
+        // Hanya dikatakan telat jika BELUM dikembalikan DAN tanggal hari ini melewati rencana kembali
+        if (!$this->pengembalian && $this->status === 'dipinjam') {
+            return Carbon::today()->greaterThan(Carbon::parse($this->tgl_kembali_plan));
+        }
+        return false;
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function detailPinjam(): HasMany  // tetap buat API
+    public function detailPinjam(): HasMany
     {
         return $this->hasMany(DetailPinjam::class);
     }
 
-    // TAMBAHAN BARU - taruh persis di bawah detailPinjam()
-    public function detailPinjams(): HasMany  // alias buat View/AdminController
+    public function detailPinjams(): HasMany
     {
         return $this->hasMany(DetailPinjam::class);
     }
