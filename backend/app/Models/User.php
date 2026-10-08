@@ -8,17 +8,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany; // digunakan untuk mengimpor
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens; // berfungsi untuk mengimpor kelas relasi satu-ke-banyak (One-to-Many) bawaan Laravel
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
+    use SoftDeletes;
+    
     use HasApiTokens, Notifiable;
 
     protected $table = 'users';
 
     protected $fillable = [
-        'name', 'email', 'password', 'role', 'no_hp', 'alamat',
+        'name', 'email', 'password', 'role', 'is_active', 'no_hp', 'alamat',
         'foto_profile',
-
     ];
 
     protected $hidden = [
@@ -30,6 +32,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
     }
 

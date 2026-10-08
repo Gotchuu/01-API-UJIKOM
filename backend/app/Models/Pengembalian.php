@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes; // 1. Import Trait
 
 class Pengembalian extends Model
 {
+    use SoftDeletes; // 2. Pakai Trait SoftDeletes
+
     protected $table = 'pengembalian';
 
     protected $fillable = [

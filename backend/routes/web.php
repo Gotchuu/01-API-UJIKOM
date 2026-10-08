@@ -28,6 +28,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/users', [AdminController::class, 'storeUser'])->name('user.store');
     Route::get('/users/{id}/edit', [AdminController::class, 'editUser'])->name('user.edit');
     Route::put('/users/{id}', [AdminController::class, 'updateUser'])->name('user.update');
+    Route::patch('/users/{id}/toggle-status', [AdminController::class, 'toggleUserStatus'])->name('user.toggle-status');
     Route::delete('/users/{id}', [AdminController::class, 'destroyUser'])->name('user.destroy');
 
     // CRUD Kategori
@@ -41,8 +42,14 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // CRUD Peminjaman
     Route::get('/peminjaman', [AdminController::class, 'indexPeminjaman'])->name('peminjaman.index');
     Route::get('/peminjaman/create', [AdminController::class, 'createPeminjaman'])->name('peminjaman.create');
+    
+    Route::put('/peminjaman/{id}/edit-request', [AdminController::class, 'updatePeminjamanRequest'])->name('peminjaman.updateRequest');//Baru
+    
     Route::post('/peminjaman', [AdminController::class, 'storePeminjaman'])->name('peminjaman.store');
     Route::put('/peminjaman/{id}/status', [AdminController::class, 'updateStatusPeminjaman'])->name('peminjaman.updateStatus');
+
+    // 6. Menolak pengajuan peminjaman (Admin)
+    Route::delete('/peminjaman/{id}/tolak', [AdminController::class, 'tolakPeminjaman'])->name('peminjaman.tolak');
     Route::delete('/peminjaman/{id}', [AdminController::class, 'destroyPeminjaman'])->name('peminjaman.destroy');
 
     // Pengembalian
@@ -62,14 +69,18 @@ Route::middleware(['auth', 'role:petugas'])->prefix('petugas')->name('petugas.')
     Route::get('/peminjaman', [PetugasController::class, 'indexPeminjaman'])->name('peminjaman.index');
     Route::post('/peminjaman/{id}/setujui', [PetugasController::class, 'setujuiPeminjaman'])->name('peminjaman.setujui');
     Route::post('/peminjaman/{id}/tolak', [PetugasController::class, 'tolakPeminjaman'])->name('peminjaman.tolak');
+    Route::put('/peminjaman/{id}/edit-request', [PetugasController::class, 'updatePeminjamanRequest'])->name('peminjaman.updateRequest'); //Baru
+    Route::get('/peminjaman/detail/{detailId}', [PetugasController::class, 'destroyDetailItem'])->name('peminjaman.destroyDetail'); //Baru
+
     Route::get('/pengembalian', [PetugasController::class, 'indexPengembalian'])->name('pengembalian.index');
     Route::post('/pengembalian', [PetugasController::class, 'storePengembalian'])->name('pengembalian.store');
     Route::get('/laporan', [PetugasController::class, 'indexLaporan'])->name('laporan.index')->middleware('role:petugas');
     Route::get('/laporan/cetak', [PetugasController::class, 'cetakPdf'])->name('laporan.cetak')->middleware('role:petugas');
     Route::get('/pesan', [PetugasController::class, 'indexPesan'])->name('pesan.index'); // BARU
     Route::post('/pesan-perbaikan', [PetugasController::class, 'storePesanPerbaikan'])->name('pesan.store');
-    Route::post('/pengembalian/{pengembalian}/approve', [PetugasController::class, 'approvePengembalian'])->name('pengembalian.approve');
+    Route::post('/peminjaman/{peminjaman}/ajukan-pengembalian', [PeminjamController::class, 'ajukanPengembalian'])->name('peminjaman.ajukanPengembalian');
     
+
 });
 // Peminjam
 Route::middleware(['auth', 'role:peminjam'])->prefix('peminjam')->name('peminjam.')->group(function () {
@@ -80,6 +91,9 @@ Route::middleware(['auth', 'role:peminjam'])->prefix('peminjam')->name('peminjam
     Route::get('/katalog', [PeminjamController::class, 'katalogAlat'])->name('katalog');
     Route::post('/peminjaman/ajukan', [PeminjamController::class, 'ajukanPeminjaman'])->name('peminjaman.ajukan');
     Route::get('/riwayat', [PeminjamController::class, 'riwayatPeminjaman'])->name('riwayat');
+
+    // TAMBAHKAN BARIS INI (Rute untuk pengajuan pengembalian)
+    Route::post('/peminjaman/{peminjaman}/ajukan-pengembalian', [PeminjamController::class, 'ajukanPengembalian'])->name('peminjaman.ajukanPengembalian');
 
     Route::get('/peminjaman/{peminjaman}', [PeminjamController::class, 'showPeminjaman'])->name('peminjaman.show');
     Route::put('/peminjaman/{peminjaman}', [PeminjamController::class, 'updatePeminjaman'])->name('peminjaman.update');

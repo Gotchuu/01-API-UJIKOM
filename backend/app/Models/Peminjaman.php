@@ -20,6 +20,7 @@ class Peminjaman extends Model
         'tgl_pinjam',
         'tgl_kembali_plan',
         'status',
+        'alasan_penolakan'
     ];
 
     protected function casts(): array

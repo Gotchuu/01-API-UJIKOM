@@ -40,7 +40,8 @@ class PeminjamController extends Controller
     public function ajukanPeminjaman(Request $request)
     {
         $request->validate([
-            'tgl_kembali_plan' => 'required|date|after:today',
+            'tgl_pinjam'       => 'required|date|after_or_equal:today',
+            'tgl_kembali_plan' => 'required|date|after:tgl_pinjam',
             'alat_id'          => 'required|array',
             'jumlah'           => 'required|array',
         ]);
@@ -50,7 +51,7 @@ class PeminjamController extends Controller
             // 1. Buat Header Peminjaman
             $peminjaman = Peminjaman::create([
                 'user_id'          => auth()->id(),
-                'tgl_pinjam'       => now(),
+                'tgl_pinjam'       => $request->tgl_pinjam,
                 'tgl_kembali_plan' => $request->tgl_kembali_plan,
                 'status'           => 'diajukan',
             ]);
@@ -116,15 +117,11 @@ class PeminjamController extends Controller
     public function destroyPeminjaman(Peminjaman $peminjaman)
     {
         $user = auth()->user();
-        if ($peminjaman->user_id !== $user->id) {
-        return redirect()->back()->with('error', 'Akses ditolak.');
-        }
-
-        if ($peminjaman->status !== 'diajukan' && $peminjaman->status !== 'diproses') {
+        if ($user->id !== $peminjaman->user_id || $peminjaman->status !== 'diajukan') {
             return redirect()->back()->with('error', 'Tidak dapat dibatalkan.');
         }
         DB::transaction(function () use ($peminjaman) {
-            $peminjaman->detailPinjam()->delete();
+            $peminjaman->detailPinjams()->delete();
             $peminjaman->delete();
         });
         return redirect()->route('peminjam.katalog')->with('success', 'Pengajuan dibatalkan.');
@@ -140,7 +137,7 @@ public function ajukanPengembalian(Request $request, Peminjaman $peminjaman)
     }
 
     $peminjaman->update([
-        'status' => 'menunggu_kembali'
+        'status' => 'diproses',
     ]);
 
     return redirect()->route('peminjam.riwayat')->with('success', 'Pengajuan pengembalian berhasil dikirim! Silakan serahkan fisik barang ke Petugas.');

@@ -16,8 +16,9 @@ class StorePengembalianRequest extends FormRequest
     {
         return [
             'peminjaman_id' => ['required', 'integer', Rule::exists('peminjaman', 'id')],
-            'tgl_kembali' => ['required', 'date'],
+            'tgl_kembali' => ['required', 'date', 'after_or_equal:tgl_pinjam'],
             'kondisi_kembali' => ['required', 'string', 'max:255'],
+            'deskripsi_kondisi' => ['nullable', 'string', 'max:1000', 'required_unless:kondisi_kembali,Baik & Lengkap,Baik / Lengkap', 'nullable'],
             'denda_kondisi' => ['nullable', 'integer', 'min:0'],
         ];
     }

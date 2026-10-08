@@ -2,33 +2,46 @@
 
 namespace App\Observers;
 
-use App\Models\LogAktivitas;
 use App\Models\Peminjaman;
+use App\Models\LogAktivitas;
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
+use Illuminate\Support\Facades\Auth;
 
 class PeminjamanObserver implements ShouldHandleEventsAfterCommit
 {
-    // Catat saat peminjam membuat pengajuan pinjaman
-    public function created(Peminjaman $peminjaman): void
+    private function catatLog(string $pesan): void
     {
-        LogAktivitas::create([
-            'user_id' => auth()->id() ?? $peminjaman->user_id,
-            'aktivitas' => "Mengajukan peminjaman alat baru (ID: #{$peminjaman->id}).",
-        ]);
+        $userId = Auth::id() ?? auth()->id();
+        if ($userId) {
+            LogAktivitas::create([
+                'user_id' => $userId,
+                'aktivitas' => $pesan,
+            ]);
+        }
     }
 
-    // Catat saat status disetujui/ditolak oleh petugas/admin
     public function updated(Peminjaman $peminjaman): void
     {
-        // wasChanged() harus dipakai di event `updated` (isDirty hanya work di `updating`)
-        if ($peminjaman->wasChanged('status')) {
-            $statusLama = $peminjaman->getOriginal('status');
-            $statusBaru = $peminjaman->status;
+        // Pastikan relasi terisi
+        $peminjaman->loadMissing('user', 'detailPinjams.alat');
 
-            LogAktivitas::create([
-                'user_id' => auth()->id() ?? $peminjaman->user_id,
-                'aktivitas' => "Mengubah status peminjaman ID: #{$peminjaman->id} dari '{$statusLama}' menjadi '{$statusBaru}'.",
-            ]);
+        $statusLama = $peminjaman->getOriginal('status');
+        $statusBaru = $peminjaman->status;
+
+        $namaPeminjam = $peminjaman->user->name ?? 'User';
+
+        $rincianAlat = $peminjaman->detailPinjams->map(function ($d) {
+            $namaAlat = $d->alat->nama_alat ?? 'Alat';
+            return "{$namaAlat} ({$d->jumlah} unit)";
+        })->join(', ');
+
+        // Log saat Petugas menyetujui peminjaman (status berubah jadi 'dipinjam')
+        if ($statusBaru === 'dipinjam') {
+            $this->catatLog("Menyetujui peminjaman ID #{$peminjaman->id} untuk {$namaPeminjam}. Barang dipinjam: {$rincianAlat}");
+        } 
+        // Log saat Peminjam mengajukan pengembalian
+        elseif ($statusBaru === 'diproses') {
+            $this->catatLog("Peminjam {$namaPeminjam} mengajukan pengembalian alat untuk transaksi ID #{$peminjaman->id}");
         }
     }
 }

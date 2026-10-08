@@ -36,26 +36,32 @@ class PengembalianObserver implements ShouldHandleEventsAfterCommit
     }
 
     /**
-     * Dipanggil otomatis saat data pengembalian di-reset / dihapus.
+     * Menggunakan "deleting" agar jika stok 0 / tidak mencukupi, 
+     * Exception dilempar SEBELUM baris data pengembalian benar-benar terhapus dari DB.
      */
-        public function deleted(Pengembalian $pengembalian): void
+    public function deleting(Pengembalian $pengembalian): void
     {
         $peminjaman = $pengembalian->peminjaman;
 
         if ($peminjaman) {
-            // 1. Validasi Stok: Cek apakah stok alat mencukupi untuk dipotong kembali
+            // 1. Validasi Ketat Stok Alat
             foreach ($peminjaman->detailPinjams as $d) {
                 if ($d->alat) {
-                    // Jika stok alat saat ini lebih kecil dari Qty yang dulu dipinjam
+                    $namaAlat = $d->alat->nama_alat ?? 'Alat';
+
+                    // PROTEKSI 1: Tolak jika stok alat di gudang saat ini bernilai 0
+                    if ($d->alat->stok <= 0) {
+                        throw new \Exception("Gagal reset pengembalian: Stok '{$namaAlat}' saat ini 0 unit.");
+                    }
+
+                    // PROTEKSI 2: Tolak jika stok alat kurang dari Qty yang harus dipotong
                     if ($d->alat->stok < $d->jumlah) {
-                        $namaAlat = $d->alat->nama_alat ?? 'Alat';
-                        // Lempar Exception agar DB::rollBack() di Controller berjalan!
                         throw new \Exception("Gagal reset pengembalian: Stok '{$namaAlat}' saat ini tinggal {$d->alat->stok} unit (dibutuhkan {$d->jumlah} unit untuk di-reset).");
                     }
                 }
             }
 
-            // 2. Jika semua stok alat aman/cukup, lakukan pemotongan stok
+            // 2. Jika seluruh stok aman, kurangi stok alat
             foreach ($peminjaman->detailPinjams as $d) {
                 if ($d->alat) {
                     $d->alat->decrement('stok', $d->jumlah);
