@@ -10,6 +10,13 @@
     </div>
 @endif
 
+<!-- Alert Gagal / Terkena Proteksi Admin (Warna Merah) -->
+@if(session('error'))
+    <div class="mb-4 p-4 rounded-lg bg-red-50 text-red-700 border border-red-200 text-sm">
+        {{ session('error') }}
+    </div>
+@endif
+
 <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
     <div class="p-5 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
         <h3 class="text-lg font-bold text-gray-800">Daftar Alat Laboratorium</h3>
@@ -64,31 +71,56 @@
                         <td class="py-3 px-4 border-b">{{ $alat->kategori->nama_kategori ?? '-' }}</td>
                         <td class="py-3 px-4 border-b">{{ $alat->stok }}</td>
                         <td class="py-3 px-4 border-b">
-                            @php
-                                $k = strtolower($alat->status_kondisi);
-                                $warnaAlat = str_contains($k, 'hilang') ? 'bg-red-100 text-red-800' : (str_contains($k, 'berat') ? 'bg-orange-100 text-orange-800' : (str_contains($k, 'ringan') ? 'bg-amber-100 text-amber-800' : (str_contains($k, 'baik') || str_contains($k, 'baru') || str_contains($k, 'lengkap') ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-800')));
-                            @endphp
-                            <span class="px-2.5 py-1 text-xs font-semibold rounded-full {{ $warnaAlat }}">
-                                {{ $alat->status_kondisi }}
-                            </span>
-                        </td>
+    <div class="flex flex-col gap-1 items-start">
+        @php
+            $k = strtolower($alat->status_kondisi);
+            $warnaAlat = str_contains($k, 'hilang') ? 'bg-red-100 text-red-800' : (str_contains($k, 'berat') ? 'bg-orange-100 text-orange-800' : (str_contains($k, 'ringan') ? 'bg-amber-100 text-amber-800' : (str_contains($k, 'baik') || str_contains($k, 'baru') || str_contains($k, 'lengkap') ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-800')));
+        @endphp
+        <!-- Badge Kondisi Fisik -->
+        <span class="px-2.5 py-1 text-xs font-semibold rounded-full {{ $warnaAlat }}">
+            {{ $alat->status_kondisi }}
+        </span>
+
+        <!-- Indikator jika Alat Sedang Dipinjam -->
+        @if($alat->sedang_dipinjam)
+            <span class="px-2 py-0.5 mt-1 text-[10px] font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                Dipinjam ({{ $alat->total_dipinjam_sum_jumlah ?? 0 }} unit)
+            </span>
+        @endif
+    </div>
+</td>
                         <td class="py-3 px-4 border-b text-center">
-                            <div class="flex items-center justify-center space-x-2">
-                                <a href="{{ route('admin.alat.edit', $alat->id) }}"
-                                    class="bg-amber-500 hover:bg-amber-600 text-white text-xs px-3 py-1.5 rounded transition">
-                                    Edit
-                                </a>
-                                <form action="{{ route('admin.alat.destroy', $alat->id) }}" method="POST"
-                                    onsubmit="return confirm('Apakah Anda yakin ingin menghapus alat ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit"
-                                        class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded transition">
-                                        Hapus
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
+                    <div class="flex items-center justify-center space-x-2">
+                        <!-- Tombol Edit Selalu Aktif -->
+                        <a href="{{ route('admin.alat.edit', $alat->id) }}"
+                            class="bg-amber-500 hover:bg-amber-600 text-white text-xs px-3 py-1.5 rounded transition">
+                            Edit
+                        </a>
+
+                        <!-- Logika Tombol Hapus -->
+                        @if($alat->sedang_dipinjam)
+                            <!-- Tombol Hapus Mati (Disabled) jika sedang dipinjam -->
+                            <button type="button" 
+                                    disabled 
+                                    title="Alat tidak dapat dihapus karena sedang dalam transaksi peminjaman aktif" 
+                                    class="bg-gray-300 text-gray-500 cursor-not-allowed text-xs px-3 py-1.5 rounded">
+                                Hapus
+                            </button>
+                        @else
+                            <!-- Tombol Hapus Aktif jika alat aman -->
+                            <form action="{{ route('admin.alat.destroy', $alat->id) }}" method="POST"
+                                onsubmit="return confirm('Apakah Anda yakin ingin menghapus alat ini?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit"
+                                    class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded transition">
+                                    Hapus
+                                </button>
+                            </form>
+                        @endif
+                    </div>
+                </td>
                     </tr>
                 @empty
                     <tr>

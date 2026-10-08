@@ -29,30 +29,32 @@
 
             <!-- Field Peminjam & Tanggal -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label class="block text-gray-700 text-sm font-semibold mb-2">Peminjam</label>
-                    <select name="user_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                        <option value="">-- Pilih Peminjam --</option>
-                        @foreach($users as $user)
-                            <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
-                                {{ $user->name }} ({{ ucfirst($user->role) }})
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+    <div>
+        <label class="block text-gray-700 text-sm font-semibold mb-2">Peminjam</label>
+        <select name="user_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            <option value="">-- Pilih Peminjam --</option>
+            @foreach($users as $user)
+                <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
+                    {{ $user->name }} ({{ ucfirst($user->role) }})
+                </option>
+            @endforeach
+        </select>
+    </div>
 
                 <div>
-                    <label class="block text-gray-700 text-sm font-semibold mb-2">Tanggal Pinjam</label>
-                    <input type="date" name="tgl_pinjam" value="{{ old('tgl_pinjam', date('Y-m-d')) }}" required
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                </div>
+        <label class="block text-gray-700 text-sm font-semibold mb-2">Tanggal Pinjam</label>
+        <input type="date" name="tgl_pinjam" value="{{ old('tgl_pinjam', date('Y-m-d')) }}" required
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            id="tgl_pinjam">  <!-- Added id -->
+    </div>
 
-                <div>
-                    <label class="block text-gray-700 text-sm font-semibold mb-2">Rencana Tgl Kembali</label>
-                    <input type="date" name="tgl_kembali_plan" value="{{ old('tgl_kembali_plan') }}" required
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                </div>
-            </div>
+    <div>
+        <label class="block text-gray-700 text-sm font-semibold mb-2">Rencana Tgl Kembali</label>
+        <input type="date" name="tgl_kembali_plan" value="{{ old('tgl_kembali_plan') }}" required
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            id="tgl_kembali_plan" min="">  <!-- Added min attribute initially empty -->
+    </div>
+</div>
 
             <hr class="border-gray-200">
 
@@ -104,6 +106,8 @@
         document.addEventListener('DOMContentLoaded', function () {
             const wrapper = document.getElementById('wrapper-alat');
             const btnTambah = document.getElementById('btn-tambah-alat');
+            const tglPinjam = document.getElementById('tgl_pinjam');
+            const tglKembaliPlan = document.getElementById('tgl_kembali_plan');
 
             // Fungsi Tambah Baris Alat
             btnTambah.addEventListener('click', function () {
@@ -128,6 +132,30 @@
                     }
                 }
             });
+
+             // Function to set minimum date for return date
+            function setMinReturnDate() {
+                if (tglPinjam && tglKembaliPlan) {
+                    const pinjamDate = tglPinjam.value;
+                    if (pinjamDate) {
+                        tglKembaliPlan.min = pinjamDate;
+                        // If already set and now invalid, reset it
+                        if (tglKembaliPlan.value && tglKembaliPlan.value < pinjamDate) {
+                            tglKembaliPlan.value = '';
+                        }
+                    } else {
+                        tglKembaliPlan.min = '';
+                    }
+                }
+            }
+
+            // Set initial minimum date on page load
+            setMinReturnDate();
+
+            // Update minimum date when borrow date changes
+            if (tglPinjam) {
+                tglPinjam.addEventListener('change', setMinReturnDate);
+            }
         });
     </script>
 @endsection

@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Dashboard Admin')</title>
-    <!-- Memuat Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Asset Offline Tailwind CSS & JS Laravel Vite -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-gray-100 font-sans antialiased">
     <div class="flex h-screen overflow-hidden">
@@ -106,12 +106,12 @@
                 <div class="text-lg font-semibold text-gray-800">
                     @yield('header-title', 'Dashboard')
                 </div>
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
-                        Logout
-                    </button>
-                </form>
+                <form action="{{ route('logout') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin keluar dari aplikasi?')">
+               @csrf
+               <button type="submit" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition">
+                  Logout
+               </button>
+            </form>
             </header>
 
             <!-- KONTEN UTAMA HALAMAN -->

@@ -26,7 +26,7 @@
                         <option value="">-- Semua Status --</option>
                         <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Diajukan</option>
                         <option value="dipinjam" {{ request('status') == 'dipinjam' ? 'selected' : '' }}>Dipinjam</option>
-                        <option value="diproses" {{ request('status') == 'diproses' ? 'selected' : '' }}>Menunggu Cek</option>
+                        <option value="menunggu_kembali" {{ request('status') == 'menunggu_kembali' ? 'selected' : '' }}>Menunggu Cek</option>
                         <option value="dikembalikan" {{ request('status') == 'dikembalikan' ? 'selected' : '' }}>Dikembalikan</option>
                         <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
                     </select>
@@ -85,7 +85,7 @@
                                     <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
                                         Dikembalikan
                                     </span>
-                                @elseif($item->status == 'diproses')
+                                @elseif($item->status == 'menunggu_kembali')
                                     <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
                                         Menunggu Cek
                                     </span>
@@ -156,7 +156,7 @@
                                     </form>
 
                                 {{-- 3. Jika sedang menunggu verifikasi --}}
-                                @elseif($item->status == 'diproses')
+                                @elseif($item->status == 'menunggu_kembali')
                                     <span class="px-2.5 py-1 text-[11px] font-bold rounded-full bg-amber-100 text-amber-800">
                                         Menunggu Cek Petugas
                                     </span>

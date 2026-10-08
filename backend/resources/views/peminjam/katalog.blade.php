@@ -59,9 +59,12 @@
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
             <div class="p-5 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div class="w-full md:w-72">
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Tanggal Pinjam <span class="text-red-500">*</span></label>
+                <input type="date" name="tgl_pinjam" id="tglPinjam" min="{{ date('Y-m-d') }}" value="{{ old('tgl_pinjam', date('Y-m-d')) }}"
+           class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
                     <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Rencana Tanggal Kembali <span class="text-red-500">*</span></label>
-                    <input type="date" name="tgl_kembali_plan" min="{{ date('Y-m-d', strtotime('+1 day')) }}" 
-                           class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
+                    <input type="date" name="tgl_kembali_plan" id="tglKembali" min="{{ date('Y-m-d', strtotime('+1 day')) }}"
+       class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
                 </div>
                 <div class="text-xs text-gray-500">
                     * Centang minimal satu alat yang ingin dipinjam pada tabel di bawah.
@@ -154,5 +157,13 @@
             }
             return true;
         }
+        document.getElementById('tglPinjam').addEventListener('change', function() {
+    const pinjam = new Date(this.value);
+    pinjam.setDate(pinjam.getDate() + 1);
+    const minKembali = pinjam.toISOString().split('T')[0];
+    const kembali = document.getElementById('tglKembali');
+    kembali.min = minKembali;
+    if (kembali.value && kembali.value < minKembali) kembali.value = minKembali;
+});
     </script>
 @endsection

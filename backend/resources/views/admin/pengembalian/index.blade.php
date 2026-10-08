@@ -4,6 +4,19 @@
 @section('header-title', 'Manajemen Transaksi Pengembalian')
 
 @section('content')
+
+{{-- Alert Messages --}}
+    @if(session('success'))
+        <div class="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-lg shadow-sm text-sm">
+            {{ session('success') }}
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="mb-4 bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg shadow-sm text-sm">
+            {{ session('error') }}
+        </div>
+    @endif
+    
     <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
         <div class="p-5 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
             @php 
@@ -18,17 +31,55 @@
     @endif
             <h3 class="text-lg font-bold text-gray-800">Daftar Pengembalian Alat</h3>
 
-            <form action="{{ route('admin.pengembalian.index') }}" method="GET" class="flex w-full md:w-80">
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari peminjam / kondisi.."
-                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 text-sm font-semibold rounded-r-lg transition">Cari</button>
-                @if(request('search'))
-                    <a href="{{ route('admin.pengembalian.index') }}" 
-                        class="ml-2 bg-gray-300 hover:bg-gray-400 text-gray-700 px-3 py-2 text-sm rounded-lg flex items-center transition" title="Reset Pencarian">
+                <!-- Form Search & Filter Tanggal -->
+        <form action="{{ route('admin.pengembalian.index') }}" method="GET" class="flex flex-wrap items-center gap-3 mb-4">
+            <!-- Input Search Nama User / Alat -->
+            <div class="flex-1 min-w-[200px]">
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama peminjam / alat..."
+                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <!-- Input Tanggal Mulai -->
+            <div class="flex items-center gap-2">
+                <label class="text-xs font-semibold text-gray-600">Dari:</label>
+                <input type="date" name="tgl_mulai" value="{{ request('tgl_mulai') }}"
+                    class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <!-- Input Tanggal Selesai -->
+            <div class="flex items-center gap-2">
+                <label class="text-xs font-semibold text-gray-600">Sampai:</label>
+                <input type="date" name="tgl_selesai" value="{{ request('tgl_selesai') }}" min="{{ request('tgl_mulai') ?: date('Y-m-d') }}"
+                    class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <!-- Filter Status Peminjaman -->
+            <div class="flex items-center gap-2">
+                <label class="text-xs font-semibold text-gray-600">Status:</label>
+                <select name="status" class="text-xs border border-gray-300 rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="" {{ request('status') == '' ? 'selected' : '' }}>Semua</option>
+                    <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Diajukan</option>
+                    <option value="dipinjam" {{ request('status') == 'dipinjam' ? 'selected' : '' }}>Dipinjam</option>
+                    <option value="diproses" {{ request('status') == 'diproses' ? 'selected' : '' }}>Diproses</option>
+                    <option value="dikembalikan" {{ request('status') == 'dikembalikan' ? 'selected' : '' }}>Dikembalikan</option>
+                    <option value="telat" {{ request('status') == 'telat' ? 'selected' : '' }}>Telat</option>
+                </select>
+            </div>
+
+            <!-- Tombol Filter & Reset -->
+            <div class="flex items-center gap-2">
+                <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 text-sm font-semibold rounded-lg transition">
+                    Filter
+                </button>
+
+                @if(request('search') || request('tgl_mulai') || request('tgl_selesai'))
+                    <a href="{{ route('admin.pengembalian.index') }}"
+                        class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-3 py-2 text-sm font-semibold rounded-lg transition">
                         Reset
                     </a>
                 @endif
-            </form>
+            </div>
+        </form>
         </div>
 
         <div class="overflow-x-auto">
@@ -84,9 +135,9 @@
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" 
-                                        onclick="return confirm('Apakah Anda yakin ingin menghapus data pengembalian ini?')"
+                                        onclick="return confirm('Apakah Anda yakin ingin mereset data pengembalian ini?')"
                                         class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-semibold transition shadow-sm">
-                                    Hapus
+                                    Reset
                                 </button>
                             </form>
                         </td>

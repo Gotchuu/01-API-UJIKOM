@@ -21,15 +21,19 @@
         <div class="p-5 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
             <h3 class="text-lg font-bold text-gray-800">Daftar Transaksi Peminjaman</h3>
             <div class="flex items-center gap-3 w-full md:w-auto">
-                <form action="{{ route('admin.peminjaman.index') }}" method="GET" class="flex w-full md:w-80">
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama peminjam / status.."
-                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 text-sm font-semibold rounded-r-lg transition">Cari</button>
-                    @if(request('search'))
-                        <a href="{{ route('admin.peminjaman.index') }}"
-                            class="ml-2 bg-gray-300 hover:bg-gray-400 text-gray-700 px-3 py-2 text-sm rounded-lg flex items-center transition" title="Reset Pencarian">
-                            Reset
-                        </a>
+                <form action="{{ route('admin.peminjaman.index') }}" method="GET" class="flex gap-2 items-center w-full md:w-auto">
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama peminjam..." class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 md:w-48">
+                    <select name="status" onchange="this.form.submit()" class="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-32">
+                        <option value="" {{ request('status') == '' ? 'selected' : '' }}>Semua Status</option>
+                        <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Diajukan</option>
+                        <option value="dipinjam" {{ request('status') == 'dipinjam' ? 'selected' : '' }}>Dipinjam</option>
+                        <option value="diproses" {{ request('status') == 'diproses' ? 'selected' : '' }}>Diproses</option>
+                        <option value="dikembalikan" {{ request('status') == 'dikembalikan' ? 'selected' : '' }}>Dikembalikan</option>
+                        <option value="telat" {{ request('status') == 'telat' ? 'selected' : '' }}>Telat</option>
+                        <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
+                    </select>
+                    @if(request('status'))
+                        <a href="{{ route('admin.peminjaman.index', ['search' => request('search')]) }}" class="text-xs text-gray-500 hover:text-red-600 font-semibold ml-1" title="Reset filter">✕</a>
                     @endif
                 </form>
                 <a href="{{ route('admin.peminjaman.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition whitespace-nowrap">+ Tambah Peminjaman</a>
@@ -67,7 +71,7 @@
                             
                             <!-- Status Dinamis Admin -->
                             <td class="py-3 px-4 border-b">
-                                @if($peminjaman->pengembalian || $peminjaman->status == 'dikembalikan')
+                                    @if($peminjaman->pengembalian || $peminjaman->status == 'dikembalikan')
                                     <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
                                         Dikembalikan
                                     </span>
@@ -83,6 +87,10 @@
                                     <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
                                         Diajukan
                                     </span>
+                                @elseif($peminjaman->status == 'ditolak')
+                                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-200 text-gray-800" title="{{ $peminjaman->alasan_penolakan }}">
+                                        Ditolak
+                                    </span>
                                 @else
                                     <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
                                         {{ ucfirst($peminjaman->status) }}
@@ -93,7 +101,7 @@
                             <td class="py-3 px-4 border-b">
                                 <div class="flex flex-col space-y-2">
                                     {{-- HANYA jika BELUM ada data pengembalian & statusnya dipinjam --}}
-                                    @if(!$peminjaman->pengembalian && $peminjaman->status == 'dipinjam')
+                                    @if(!$peminjaman->pengembalian && in_array($peminjaman->status, ['diproses', 'diproses', 'dipinjam']))
                                         <button onclick="openModalPengembalian({{ json_encode($peminjaman) }})" 
                                             class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs font-semibold transition text-center shadow-sm">
                                             Proses Pengembalian
@@ -106,22 +114,29 @@
                                             ✏️ Edit Request
                                         </button>
 
-                                        <form action="{{ route('admin.peminjaman.updateStatus', $peminjaman->id) }}" method="POST">
+                                        <!-- Tombol Setujui -->
+                                        <form action="{{ route('admin.peminjaman.updateStatus', $peminjaman->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menyetujui peminjaman ini?')">
                                             @csrf
                                             @method('PUT')
-                                            <select name="status" onchange="if(confirm('Yakin ingin menyetujui peminjaman ini?')) this.form.submit(); else this.value = '{{ $peminjaman->status }}';" 
-                                                class="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none w-full bg-amber-50 font-medium text-amber-900 mt-1">
-                                                <option value="diajukan" selected>Diajukan</option>
-                                                <option value="dipinjam">Setujui (Dipinjam)</option>
-                                            </select>
+                                            <input type="hidden" name="status" value="dipinjam">
+                                            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs font-semibold transition w-full shadow-sm">
+                                                ✅ Setujui
+                                            </button>
                                         </form>
 
-                                    {{-- Jika SUDAH DIKEMBALIKAN --}}
+                                        <!-- Tombol Buka Modal Tolak -->
+                                        <button type="button" onclick="openModalTolak({{ $peminjaman->id }}, '{{ json_encode($peminjaman->user->name ?? 'Peminjam') }}')" 
+                                            class="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded text-xs font-semibold transition w-full shadow-sm">
+                                            ❌ Tolak
+                                        </button>
+
+                                    {{-- Jika SUDAH DIKEMBALIKAN ATAU DITOLAK --}}
                                     @else
                                         <span class="text-xs text-gray-500 italic text-center py-1">Transaksi Selesai</span>
                                     @endif
 
                                     {{-- Tombol Hapus --}}
+                                    @if(in_array($peminjaman->status, ['dikembalikan', 'ditolak']))
                                     <form action="{{ route('admin.peminjaman.destroy', $peminjaman->id) }}" method="POST" onsubmit="return confirm('Yakin menghapus data transaksi ini?')">
                                         @csrf
                                         @method('DELETE')
@@ -129,6 +144,7 @@
                                             Hapus
                                         </button>
                                     </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -143,8 +159,6 @@
         <div class="p-4 border-t border-gray-200 bg-gray-50">{{ $peminjamans->links() }}</div>
     </div>
     
-    {{-- =================================================================================================== --}}
-
     {{-- MODAL PROCESS PENGEMBALIAN --}}
     <div id="modalPengembalian" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
         <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
@@ -249,7 +263,7 @@
                                 <option value="">-- Pilih Alat Tambahan --</option>
                                 @if(isset($allAlats))
                                     @foreach($allAlats as $a)
-                                        <option value="{{ $a->id }}">{{ $a->nama_alat }} (Stok: {{ $a->stok }})</option>
+                                        <option value="{{ $a->id }}">{{ $a->nama_alat }} (Stok: {{$a->stok }})</option>
                                     @endforeach
                                 @endif
                             </select>
@@ -263,6 +277,31 @@
                 <div class="flex justify-end gap-2 pt-3 border-t border-gray-200">
                     <button type="button" onclick="closeModalEditRequest()" class="px-4 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 font-semibold">Batal</button>
                     <button type="submit" class="px-4 py-2 text-sm bg-amber-600 hover:bg-amber-700 rounded-lg text-white font-semibold">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- MODAL TOLAK PENGAJUAN ADMIN --}}
+    <div id="modalTolak" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+            <div class="flex justify-between items-center pb-3 border-b border-gray-200 mb-4">
+                <h4 class="text-base font-bold text-gray-800">Tolak Pengajuan Peminjaman</h4>
+                <button onclick="closeModalTolak()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
+            </div>
+
+            <p id="peminjamTolakText" class="text-xs text-gray-600 mb-3"></p>
+
+            <form id="formTolakPeminjaman" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Alasan Penolakan <span class="text-red-500">*</span></label>
+                    <textarea name="alasan_penolakan" rows="3" required placeholder="Contoh: Stok alat sedang dalam perawatan / Jadwal bentrok..." class="w-full text-xs border border-gray-300 rounded-lg p-2.5 focus:ring-red-500 focus:border-red-500"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t border-gray-200">
+                    <button type="button" onclick="closeModalTolak()" class="px-4 py-2 text-xs bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 font-semibold">Batal</button>
+                    <button type="submit" class="px-4 py-2 text-xs bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold">Kirim Penolakan</button>
                 </div>
             </form>
         </div>
@@ -374,6 +413,18 @@
         function closeModalEditRequest() {
             document.getElementById('modalEditRequest').classList.add('hidden');
             document.getElementById('modalEditRequest').classList.remove('flex');
+        }
+
+        function openModalTolak(id, nama) {
+            document.getElementById('formTolakPeminjaman').action = "/admin/peminjaman/" + id + "/tolak";
+            document.getElementById('peminjamTolakText').innerText = "Menolak pengajuan peminjaman atas nama: " + nama;
+            document.getElementById('modalTolak').classList.remove('hidden');
+            document.getElementById('modalTolak').classList.add('flex');
+        }
+
+        function closeModalTolak() {
+            document.getElementById('modalTolak').classList.add('hidden');
+            document.getElementById('modalTolak').classList.remove('flex');
         }
     </script>
 @endsection
