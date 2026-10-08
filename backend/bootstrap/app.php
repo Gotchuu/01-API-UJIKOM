@@ -7,6 +7,7 @@ use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\IsAdmin;
 use App\Http\Middleware\IsPetugas;
 use App\Http\Middleware\IsPeminjam;
+use App\Http\Middleware\CheckActiveUser;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -16,6 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Mendaftarkan CheckActiveUser ke grup web
+        $middleware->web(append: [
+            CheckActiveUser::class,
+        ]);
+
         $middleware->alias([
             'role' => CheckRole::class,
             'role.admin' => IsAdmin::class,

@@ -49,7 +49,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('/peminjaman/{id}/status', [AdminController::class, 'updateStatusPeminjaman'])->name('peminjaman.updateStatus');
 
     // 6. Menolak pengajuan peminjaman (Admin)
-    Route::delete('/peminjaman/{id}/tolak', [AdminController::class, 'tolakPeminjaman'])->name('peminjaman.tolak');
+    // UBAH dari Route::delete menjadi Route::put
+    Route::put('/peminjaman/{id}/tolak', [AdminController::class, 'tolakPeminjaman'])->name('peminjaman.tolak');
     Route::delete('/peminjaman/{id}', [AdminController::class, 'destroyPeminjaman'])->name('peminjaman.destroy');
 
     // Pengembalian
