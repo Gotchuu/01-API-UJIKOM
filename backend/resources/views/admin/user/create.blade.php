@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="max-w-xl bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-    <form action="{{ route('admin.user.store') }}" method="POST">
+    <form action="{{ route('admin.user.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
        
        <div class="mb-4">
@@ -27,6 +27,13 @@
            <input type="password" name="password" required 
                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
            @error('password') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+       </div>
+
+       <div class="mb-4">
+           <label class="block text-gray-700 text-sm font-semibold mb-2">Foto Profile (Opsional)</label>
+           <input type="file" name="foto_profile" accept="image/*" class="w-full text-sm border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+           <p class="text-[10px] text-gray-500 mt-1">Format: JPG/PNG, maksimal 2MB</p>
+           @error('foto_profile') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
        </div>
 
        <div class="mb-4">

@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
@@ -215,15 +216,22 @@ class AdminController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
             'role' => 'required|in:admin,petugas,peminjam',
+            'foto_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        User::create([
+        $data = [
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
             'no_hp' => $request->no_hp,
-        ]);
+        ];
+
+        if ($request->hasFile('foto_profile')) {
+            $data['foto_profile'] = $request->file('foto_profile')->store('profiles', 'public');
+        }
+
+        User::create($data);
 
         return redirect()->route('admin.user.index')->with('success', 'User berhasil ditambahkan.');
     }
@@ -247,13 +255,29 @@ class AdminController extends Controller
             'name'  => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $id,
             'role'  => 'required|in:admin,petugas,peminjam',
+            'foto_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $user->update([
+        $data = [
             'name'  => $request->name,
             'email' => $request->email,
             'role'  => $request->role,
-        ]);
+            'no_hp' => $request->no_hp,
+        ];
+
+        if ($request->filled('password')) {
+            $request->validate(['password' => 'string|min:6']);
+            $data['password'] = Hash::make($request->password);
+        }
+
+        if ($request->hasFile('foto_profile')) {
+            if ($user->foto_profile) {
+                Storage::disk('public')->delete($user->foto_profile);
+            }
+            $data['foto_profile'] = $request->file('foto_profile')->store('profiles', 'public');
+        }
+
+        $user->update($data);
 
         return redirect()->route('admin.user.index')
             ->with('success', "Data user '{$user->name}' berhasil diperbarui.");
@@ -299,6 +323,10 @@ class AdminController extends Controller
         if ($memilikiPeminjamanAktif) {
             return redirect()->route('admin.user.index')
                 ->with('error', "User '{$user->name}' tidak dapat dihapus karena masih memiliki transaksi peminjaman yang aktif atau belum mengembalikan alat!");
+        }
+
+        if ($user->foto_profile) {
+            Storage::disk('public')->delete($user->foto_profile);
         }
 
         $user->delete();
