@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE peminjaman MODIFY status ENUM('diajukan','dipinjam','diproses','dikembalikan','telat') DEFAULT 'diajukan'");
+        DB::statement("ALTER TABLE peminjaman MODIFY status ENUM('diajukan', 'dipinjam', 'diproses', 'dikembalikan', 'telat', 'ditolak', 'menunggu_kembali') DEFAULT 'diajukan'");
     }
-
     /**
      * Reverse the migrations.
      */
