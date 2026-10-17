@@ -40,10 +40,15 @@ class PeminjamController extends Controller
     public function ajukanPeminjaman(Request $request)
     {
         $request->validate([
-            'tgl_pinjam'       => 'required|date|after_or_equal:today',
-            'tgl_kembali_plan' => 'required|date|after:tgl_pinjam',
-            'alat_id'          => 'required|array',
-            'jumlah'           => 'required|array',
+            'tgl_pinjam' => 'required|date',
+            'tgl_kembali_plan' => 'required|date|after_or_equal:tgl_pinjam',
+            'alat_id' => 'required|array|min:1',
+            'alat_id.*' => 'exists:alat,id',
+            'jumlah' => 'required|array',
+            'jumlah.*' => 'integer|min:1|max:2',
+        ], [
+            'alat_id.required' => 'Pilih minimal satu alat yang ingin dipinjam.',
+            'jumlah.*.max' => 'Maksimal jumlah peminjaman per item alat adalah 2 unit.',
         ]);
 
         DB::beginTransaction();
@@ -76,20 +81,46 @@ class PeminjamController extends Controller
         }
     }
 
-    // Melihat riwayat peminjaman user yang sedang login (Lengkap Filter Status & Data Pengembalian)
+   // Melihat riwayat peminjaman user yang sedang login (Lengkap Filter Status, Tanggal, Search Alat, & Pagination)
     public function riwayatPeminjaman(Request $request)
     {
         $status = $request->input('status');
+        $search = $request->input('search');
+        $tglMulai = $request->input('tgl_mulai');
+        $tglSelesai = $request->input('tgl_selesai');
+
+        // Validasi tanggal selesai tidak boleh lebih kecil dari tanggal mulai
+        if ($tglMulai && $tglSelesai && $tglSelesai < $tglMulai) {
+            return back()->with('error', 'Tanggal "Sampai" tidak boleh lebih awal dari tanggal "Dari".');
+        }
 
         $peminjamans = Peminjaman::with(['detailPinjams.alat', 'pengembalian'])
             ->where('user_id', auth()->id())
+            // Filter Status
             ->when($status, function ($query, $status) {
                 return $query->where('status', $status);
             })
+            // Filter Pencarian Nama Alat
+            ->when($search, function ($query, $search) {
+                return $query->whereHas('detailPinjams.alat', function ($q) use ($search) {
+                    $q->where('nama_alat', 'like', "%{$search}%");
+                });
+            })
+            // Filter Rentang Tanggal Pinjam
+            ->when($tglMulai && $tglSelesai, function ($query) use ($tglMulai, $tglSelesai) {
+                return $query->whereBetween('tgl_pinjam', [$tglMulai, $tglSelesai]);
+            })
+            ->when($tglMulai && !$tglSelesai, function ($query) use ($tglMulai) {
+                return $query->whereDate('tgl_pinjam', '>=', $tglMulai);
+            })
+            ->when(!$tglMulai && $tglSelesai, function ($query) use ($tglSelesai) {
+                return $query->whereDate('tgl_pinjam', '<=', $tglSelesai);
+            })
             ->latest()
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('peminjam.riwayat', compact('peminjamans', 'status'));
+        return view('peminjam.riwayat', compact('peminjamans', 'status', 'search', 'tglMulai', 'tglSelesai'));
     }
 
     public function showPeminjaman(Peminjaman $peminjaman)
@@ -117,30 +148,35 @@ class PeminjamController extends Controller
     public function destroyPeminjaman(Peminjaman $peminjaman)
     {
         $user = auth()->user();
-        if ($user->id !== $peminjaman->user_id || $peminjaman->status !== 'diajukan') {
+
+        if ($user->id !== $peminjaman->user_id || !in_array($peminjaman->status, ['diajukan', 'ditolak'])) {
             return redirect()->back()->with('error', 'Tidak dapat dibatalkan.');
         }
         DB::transaction(function () use ($peminjaman) {
             $peminjaman->detailPinjams()->delete();
             $peminjaman->delete();
         });
-        return redirect()->route('peminjam.katalog')->with('success', 'Pengajuan dibatalkan.');
+        $pesanSukses = $peminjaman->status === 'ditolak' 
+            ? 'Riwayat penolakan berhasil dibersihkan.' 
+            : 'Pengajuan peminjaman berhasil dibatalkan.';
+
+        return redirect()->route('peminjam.riwayat')->with('success', $pesanSukses);
     }
 
     // Peminjam mengajukan pengembalian alat
-public function ajukanPengembalian(Request $request, Peminjaman $peminjaman)
-{
-    $user = auth()->user();
+    public function ajukanPengembalian(Request $request, Peminjaman $peminjaman)
+    {
+        $user = auth()->user();
 
-    if ($peminjaman->user_id !== $user->id || !in_array($peminjaman->status, ['dipinjam', 'telat'])) {
-        return redirect()->back()->with('error', 'Transaksi tidak dapat diajukan untuk pengembalian.');
-    }
+        if ($peminjaman->user_id !== $user->id || !in_array($peminjaman->status, ['dipinjam', 'telat'])) {
+            return redirect()->back()->with('error', 'Transaksi tidak dapat diajukan untuk pengembalian.');
+        }
 
-    $peminjaman->update([
-        'status' => 'diproses',
-    ]);
+        $peminjaman->update([
+            'status' => 'diproses',
+        ]);
 
-    return redirect()->route('peminjam.riwayat')->with('success', 'Pengajuan pengembalian berhasil dikirim! Silakan serahkan fisik barang ke Petugas.');
+        return redirect()->route('peminjam.riwayat')->with('success', 'Pengajuan pengembalian berhasil dikirim! Silakan serahkan fisik barang ke Petugas.');
     }
     // Method Dashboard Peminjam
     public function dashboard()
