@@ -5,7 +5,7 @@
     <title>Laporan Peminjaman Alat</title>
     <style>
         body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 10px; color: #333; line-height: 1.4; }
-        .header { text-align: center; margin-bottom: 20px; border-b: 2px solid #1e293b; padding-bottom: 10px; }
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #1e293b; padding-bottom: 10px; }
         .header h2 { margin: 0; font-size: 16px; text-transform: uppercase; color: #0f172a; }
         .header p { margin: 2px 0 0; font-size: 10px; color: #64748b; }
         .info-bar { margin-bottom: 15px; width: 100%; }
@@ -16,11 +16,12 @@
         .text-center { text-align: center; }
         .text-right { text-align: right; }
         .font-bold { font-weight: bold; }
-        .badge { padding: 2px 5px; border-radius: 3px; font-size: 8px; font-weight: bold; text-transform: uppercase; display: inline-block; }
+        .badge { padding: 3px 6px; border-radius: 4px; font-size: 8px; font-weight: bold; text-transform: uppercase; display: inline-block; }
         .badge-diajukan { background-color: #fef3c7; color: #92400e; }
-        .badge-dipinjam { background-color: #dbeafe; color: #1e40af; }
+        .badge-dipinjam, .badge-diproses { background-color: #dbeafe; color: #1e40af; }
         .badge-dikembalikan { background-color: #d1fae5; color: #065f46; }
         .badge-telat { background-color: #fee2e2; color: #991b1b; }
+        .badge-ditolak { background-color: #e2e8f0; color: #334155; }
         .summary-box { float: right; width: 250px; margin-top: 10px; border: 1px solid #cbd5e1; padding: 8px; background-color: #f8fafc; }
         .footer { margin-top: 40px; width: 100%; }
         .footer td { border: none; text-align: center; font-size: 10px; }
@@ -80,7 +81,7 @@
                         @endif
                     </td>
                     <td class="text-center">
-                        <span class="badge badge-{{ $p->status }}">{{ ucfirst($p->status) }}</span>
+                        <span class="badge badge-{{ strtolower($p->status) }}">{{ ucfirst($p->status) }}</span>
                     </td>
                     <td>
                         @if($p->pengembalian)

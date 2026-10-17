@@ -17,13 +17,18 @@
     @endif
 
     <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
-        {{-- Header & Search Form --}}
-        <div class="p-5 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
-            <h3 class="text-lg font-bold text-gray-800">Daftar Transaksi Peminjaman</h3>
-            <div class="flex items-center gap-3 w-full md:w-auto">
-                <form action="{{ route('admin.peminjaman.index') }}" method="GET" class="flex gap-2 items-center w-full md:w-auto">
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama peminjam..." class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 md:w-48">
-                    <select name="status" onchange="this.form.submit()" class="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-32">
+        {{-- Header & Search/Filter Form --}}
+        <div class="p-5 border-b border-gray-200 bg-gray-50 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+            <h3 class="text-lg font-bold text-gray-800 whitespace-nowrap">Daftar Transaksi Peminjaman</h3>
+            
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full xl:w-auto">
+                <!-- Form Search & Filter Rentang Tanggal -->
+                <form action="{{ route('admin.peminjaman.index') }}" method="GET" class="flex flex-wrap md:flex-nowrap items-center gap-2 w-full md:w-auto">
+                    <!-- Search Input -->
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari peminjam / alat..." class="px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-40">
+                    
+                    <!-- Select Status -->
+                    <select name="status" onchange="this.form.submit()" class="text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-32">
                         <option value="" {{ request('status') == '' ? 'selected' : '' }}>Semua Status</option>
                         <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Diajukan</option>
                         <option value="dipinjam" {{ request('status') == 'dipinjam' ? 'selected' : '' }}>Dipinjam</option>
@@ -32,11 +37,33 @@
                         <option value="telat" {{ request('status') == 'telat' ? 'selected' : '' }}>Telat</option>
                         <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
                     </select>
-                    @if(request('status'))
-                        <a href="{{ route('admin.peminjaman.index', ['search' => request('search')]) }}" class="text-xs text-gray-500 hover:text-red-600 font-semibold ml-1" title="Reset filter">✕</a>
+
+                    <!-- Filter Tanggal Dari -->
+                    <div class="flex items-center gap-1">
+                        <span class="text-xs text-gray-500 font-medium">Dari:</span>
+                        <input type="date" id="admin_tgl_mulai" name="tgl_mulai" value="{{ request('tgl_mulai') }}" onchange="updateMinReturnDateAdmin()" class="px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Filter Tanggal Sampai -->
+                    <div class="flex items-center gap-1">
+                        <span class="text-xs text-gray-500 font-medium">Sampai:</span>
+                        <input type="date" id="admin_tgl_selesai" name="tgl_selesai" value="{{ request('tgl_selesai') }}" class="px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Tombol Cari / Filter -->
+                    <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition">
+                        Filter
+                    </button>
+
+                    <!-- Reset Filter -->
+                    @if(request('search') || request('status') || request('tgl_mulai') || request('tgl_selesai'))
+                        <a href="{{ route('admin.peminjaman.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs px-2.5 py-1.5 rounded-lg font-semibold transition" title="Reset Semua Filter">
+                            Reset
+                        </a>
                     @endif
                 </form>
-                <a href="{{ route('admin.peminjaman.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition whitespace-nowrap">+ Tambah Peminjaman</a>
+
+                <a href="{{ route('admin.peminjaman.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition whitespace-nowrap text-center">+ Tambah Peminjaman</a>
             </div>
         </div>
 
@@ -71,7 +98,7 @@
                             
                             <!-- Status Dinamis Admin -->
                             <td class="py-3 px-4 border-b">
-                                    @if($peminjaman->pengembalian || $peminjaman->status == 'dikembalikan')
+                                @if($peminjaman->pengembalian || $peminjaman->status == 'dikembalikan')
                                     <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
                                         Dikembalikan
                                     </span>
@@ -100,8 +127,8 @@
 
                             <td class="py-3 px-4 border-b">
                                 <div class="flex flex-col space-y-2">
-                                    {{-- HANYA jika BELUM ada data pengembalian & statusnya dipinjam --}}
-                                    @if(!$peminjaman->pengembalian && in_array($peminjaman->status, ['diproses', 'diproses', 'dipinjam']))
+                                    {{-- HANYA jika BELUM ada data pengembalian & statusnya dipinjam/diproses --}}
+                                    @if(!$peminjaman->pengembalian && in_array($peminjaman->status, ['diproses', 'dipinjam']))
                                         <button onclick="openModalPengembalian({{ json_encode($peminjaman) }})" 
                                             class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs font-semibold transition text-center shadow-sm">
                                             Proses Pengembalian
@@ -308,6 +335,22 @@
     </div>
 
     <script>
+        function updateMinReturnDateAdmin() {
+            const tglMulai = document.getElementById('admin_tgl_mulai').value;
+            const tglSelesaiInput = document.getElementById('admin_tgl_selesai');
+            
+            if (tglMulai) {
+                tglSelesaiInput.min = tglMulai;
+                if (tglSelesaiInput.value && tglSelesaiInput.value < tglMulai) {
+                    tglSelesaiInput.value = tglMulai;
+                }
+            } else {
+                tglSelesaiInput.removeAttribute('min');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', updateMinReturnDateAdmin);
+
         let tglPlanGlobal = '';
 
         function openModalPengembalian(peminjaman) {
@@ -386,6 +429,9 @@
             document.getElementById('edit_tgl_pinjam').value = peminjaman.tgl_pinjam;
             document.getElementById('edit_tgl_kembali_plan').value = peminjaman.tgl_kembali_plan;
 
+            // Ambil CSRF Token dari tag meta layout
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+
             const wrapper = document.getElementById('wrapper_detail_alat_edit');
             wrapper.innerHTML = '';
 
@@ -394,12 +440,20 @@
                     const namaAlat = detail.alat ? detail.alat.nama_alat : 'Alat Dihapus';
                     const div = document.createElement('div');
                     div.className = 'flex items-center justify-between text-xs bg-white p-2 rounded border border-amber-200';
+                    
+                    // PERBAIKAN: Gunakan input hidden _token dan _method secara murni (bukan directive Blade @)
                     div.innerHTML = `
                         <span class="font-semibold text-gray-800">${namaAlat}</span>
                         <div class="flex items-center gap-2">
                             <label class="text-gray-500">Jumlah:</label>
                             <input type="number" name="jumlah[${detail.id}]" value="${detail.jumlah}" min="1" class="w-16 p-1 border border-gray-300 rounded text-center font-bold">
-                            <a href="/admin/peminjaman/detail/${detail.id}" onclick="return confirm('Hapus alat ini dari daftar pengajuan?')" class="text-red-600 hover:text-red-800 font-bold ml-1" title="Hapus Item">&times;</a>
+                            
+                            <!-- FORM DELETE MURNI TANPA DIRECTIVE BLADE DI JS -->
+                            <form action="/admin/peminjaman/detail/${detail.id}" method="POST" class="inline" onsubmit="return confirm('Hapus alat ini dari daftar pengajuan?')">
+                                <input type="hidden" name="_token" value="${csrfToken}">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit" class="text-red-600 hover:text-red-800 font-bold ml-1 text-sm p-0.5 rounded hover:bg-red-50" title="Hapus Item">&times;</button>
+                            </form>
                         </div>
                     `;
                     wrapper.appendChild(div);

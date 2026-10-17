@@ -12,7 +12,7 @@
     <div class="bg-white border rounded-xl p-4 shadow-sm">
         <div class="text-xs text-gray-500 uppercase font-semibold">Aktif Dipinjam</div>
         <div class="text-xl font-bold text-blue-600 mt-1">
-            {{ $peminjamans->where('status', 'dipinjam')->count() }}
+            {{ $peminjamans->whereIn('status', ['dipinjam', 'diproses'])->count() }}
         </div>
     </div>
     <div class="bg-white border rounded-xl p-4 shadow-sm">
@@ -34,11 +34,11 @@
     <form action="{{ route('petugas.laporan.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-3">
         <div>
             <label class="text-xs font-semibold text-gray-600">Dari Tanggal</label>
-            <input type="date" name="dari" value="{{ $dari }}" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+            <input type="date" id="tgl_dari" name="dari" value="{{ $dari }}" onchange="updateMinReturnDate()" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
         </div>
         <div>
             <label class="text-xs font-semibold text-gray-600">Sampai Tanggal</label>
-            <input type="date" name="sampai" value="{{ $sampai }}" min="{{ $dari }}" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+            <input type="date" id="tgl_sampai" name="sampai" value="{{ $sampai }}" min="{{ $dari }}" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
         </div>
         <div>
             <label class="text-xs font-semibold text-gray-600">Status Transaksi</label>
@@ -46,8 +46,10 @@
                 <option value="">Semua Status</option>
                 <option value="diajukan" @selected($status=='diajukan')>Diajukan</option>
                 <option value="dipinjam" @selected($status=='dipinjam')>Dipinjam</option>
+                <option value="diproses" @selected($status=='diproses')>Diproses</option>
                 <option value="dikembalikan" @selected($status=='dikembalikan')>Dikembalikan</option>
                 <option value="telat" @selected($status=='telat')>Telat</option>
+                <option value="ditolak" @selected($status=='ditolak')>Ditolak</option>
             </select>
         </div>
         <div class="flex items-end gap-2 md:col-span-2">
@@ -99,11 +101,18 @@
                             @endif
                         </td>
                         <td class="px-4 py-3 text-center">
-                            <span class="px-2.5 py-1 text-xs font-semibold rounded-full
-                                @if($p->status == 'diajukan') bg-amber-100 text-amber-800
-                                @elseif($p->status == 'dipinjam') bg-blue-100 text-blue-800
-                                @elseif($p->status == 'dikembalikan') bg-emerald-100 text-emerald-800
-                                @else bg-red-100 text-red-800 @endif">
+                            @php
+                                $st = strtolower($p->status);
+                                $badgeColor = match($st) {
+                                    'diajukan' => 'bg-amber-100 text-amber-800 border border-amber-200',
+                                    'dipinjam', 'diproses' => 'bg-blue-100 text-blue-800 border border-blue-200',
+                                    'dikembalikan' => 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+                                    'ditolak' => 'bg-gray-200 text-gray-800 border border-gray-300',
+                                    'telat' => 'bg-red-100 text-red-800 border border-red-200',
+                                    default => 'bg-gray-100 text-gray-700'
+                                };
+                            @endphp
+                            <span class="px-2.5 py-1 text-xs font-semibold rounded-full {{ $badgeColor }}">
                                 {{ ucfirst($p->status) }}
                             </span>
                         </td>
@@ -113,7 +122,7 @@
                                 @if($p->pengembalian->denda > 0)
                                     <div class="text-red-600 font-bold">Denda: Rp {{ number_format($p->pengembalian->denda, 0, ',', '.') }}</div>
                                 @else
-                                    <div class="text-emerald-600">Bebas Denda</div>
+                                    <div class="text-emerald-600 font-semibold">Bebas Denda</div>
                                 @endif
                             @else
                                 <span class="text-gray-400 italic">Belum kembali</span>
@@ -133,4 +142,19 @@
     </div>
     <div class="p-4 bg-gray-50 border-t">{{ $peminjamans->links() }}</div>
 </div>
+
+<script>
+    function updateMinReturnDate() {
+        const dariInput = document.getElementById('tgl_dari');
+        const sampaiInput = document.getElementById('tgl_sampai');
+        
+        if (dariInput && sampaiInput && dariInput.value) {
+            sampaiInput.min = dariInput.value;
+            if (sampaiInput.value && sampaiInput.value < dariInput.value) {
+                sampaiInput.value = dariInput.value;
+            }
+        }
+    }
+    document.addEventListener('DOMContentLoaded', updateMinReturnDate);
+</script>
 @endsection

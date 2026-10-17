@@ -16,13 +16,17 @@
     @endif
 
     <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
-        {{-- Header & Filter Status --}}
-        <div class="p-5 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
-            <h3 class="text-lg font-bold text-gray-800">Daftar Transaksi Saya</h3>
+        {{-- Header & Filter Form --}}
+        <div class="p-5 border-b border-gray-200 bg-gray-50 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+            <h3 class="text-lg font-bold text-gray-800 whitespace-nowrap">Daftar Transaksi Saya</h3>
             
-            <div class="flex items-center gap-3 w-full md:w-auto">
-                <form action="{{ route('peminjam.riwayat') }}" method="GET" class="w-full md:w-56">
-                    <select name="status" onchange="this.form.submit()" class="w-full text-sm border border-gray-300 rounded-lg p-2 focus:ring-blue-500">
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full xl:w-auto">
+                <form action="{{ route('peminjam.riwayat') }}" method="GET" class="flex flex-wrap md:flex-nowrap items-center gap-2 w-full md:w-auto">
+                    <!-- Search Input Nama Alat -->
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama alat..." class="px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-36">
+
+                    <!-- Filter Status -->
+                    <select name="status" onchange="this.form.submit()" class="text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-36">
                         <option value="">-- Semua Status --</option>
                         <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Diajukan</option>
                         <option value="dipinjam" {{ request('status') == 'dipinjam' ? 'selected' : '' }}>Dipinjam</option>
@@ -30,9 +34,33 @@
                         <option value="dikembalikan" {{ request('status') == 'dikembalikan' ? 'selected' : '' }}>Dikembalikan</option>
                         <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
                     </select>
+
+                    <!-- Filter Tanggal Dari -->
+                    <div class="flex items-center gap-1">
+                        <span class="text-xs text-gray-500 font-medium">Dari:</span>
+                        <input type="date" id="peminjam_tgl_mulai" name="tgl_mulai" value="{{ request('tgl_mulai') }}" onchange="updateMinReturnDatePeminjam()" class="px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Filter Tanggal Sampai -->
+                    <div class="flex items-center gap-1">
+                        <span class="text-xs text-gray-500 font-medium">Sampai:</span>
+                        <input type="date" id="peminjam_tgl_selesai" name="tgl_selesai" value="{{ request('tgl_selesai') }}" class="px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Tombol Submit Filter -->
+                    <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition">
+                        Filter
+                    </button>
+
+                    <!-- Tombol Reset -->
+                    @if(request('search') || request('status') || request('tgl_mulai') || request('tgl_selesai'))
+                        <a href="{{ route('peminjam.riwayat') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs px-2.5 py-1.5 rounded-lg font-semibold transition" title="Reset Filter">
+                            Reset
+                        </a>
+                    @endif
                 </form>
 
-                <a href="{{ route('peminjam.katalog') }}" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition whitespace-nowrap">
+                <a href="{{ route('peminjam.katalog') }}" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition whitespace-nowrap text-center">
                     + Pinjam Alat Baru
                 </a>
             </div>
@@ -87,7 +115,7 @@
                                     </span>
                                 @elseif($item->status == 'diproses')
                                     <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
-                                        Menunggu Cek
+                                        Diproses
                                     </span>
                                 @elseif($item->is_telat)
                                     <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
@@ -185,5 +213,28 @@
                 </tbody>
             </table>
         </div>
+
+        {{-- Links Pagination --}}
+        <div class="p-4 border-t border-gray-200 bg-gray-50">
+            {{ $peminjamans->links() }}
+        </div>
     </div>
+
+    <script>
+        function updateMinReturnDatePeminjam() {
+            const tglMulai = document.getElementById('peminjam_tgl_mulai').value;
+            const tglSelesaiInput = document.getElementById('peminjam_tgl_selesai');
+            
+            if (tglMulai) {
+                tglSelesaiInput.min = tglMulai;
+                if (tglSelesaiInput.value && tglSelesaiInput.value < tglMulai) {
+                    tglSelesaiInput.value = tglMulai;
+                }
+            } else {
+                tglSelesaiInput.removeAttribute('min');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', updateMinReturnDatePeminjam);
+    </script>
 @endsection

@@ -10,7 +10,6 @@
     </div>
 @endif
 
-<!-- Alert Gagal / Terkena Proteksi Admin (Warna Merah) -->
 @if(session('error'))
     <div class="mb-4 p-4 rounded-lg bg-red-50 text-red-700 border border-red-200 text-sm">
         {{ session('error') }}
@@ -22,7 +21,6 @@
         <h3 class="text-lg font-bold text-gray-800">Daftar Alat Laboratorium</h3>
 
         <div class="flex items-center gap-3 w-full md:w-auto">
-            <!-- Form Search -->
             <form action="{{ route('admin.alat.index') }}" method="GET" class="flex w-full md:w-88">
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama alat, kategori..."
                     class="w-full px-3 py-2 text-sm border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -37,7 +35,6 @@
                 @endif
             </form>
 
-            <!-- Tombol Tambah -->
             <a href="{{ route('admin.alat.create') }}"
                 class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition whitespace-nowrap">
                 + Tambah Alat
@@ -52,8 +49,8 @@
                     <th class="py-3 px-4 border-b">Gambar</th>
                     <th class="py-3 px-4 border-b">Nama Alat</th>
                     <th class="py-3 px-4 border-b">Kategori</th>
-                    <th class="py-3 px-4 border-b">Stok</th>
-                    <th class="py-3 px-4 border-b">Kondisi</th>
+                    <th class="py-3 px-4 border-b text-center">Siap Pinjam (Baik)</th>
+                    <th class="py-3 px-4 border-b text-center">Rincian Stok Kondisi</th>
                     <th class="py-3 px-4 border-b text-center">Aksi</th>
                 </tr>
             </thead>
@@ -69,70 +66,79 @@
                         </td>
                         <td class="py-3 px-4 border-b font-medium text-gray-900">{{ $alat->nama_alat }}</td>
                         <td class="py-3 px-4 border-b">{{ $alat->kategori->nama_kategori ?? '-' }}</td>
-                        <td class="py-3 px-4 border-b">{{ $alat->stok }}</td>
-                        <td class="py-3 px-4 border-b">
-    <div class="flex flex-col gap-1 items-start">
-        @php
-            $k = strtolower($alat->status_kondisi);
-            $warnaAlat = str_contains($k, 'hilang') ? 'bg-red-100 text-red-800' : (str_contains($k, 'berat') ? 'bg-orange-100 text-orange-800' : (str_contains($k, 'ringan') ? 'bg-amber-100 text-amber-800' : (str_contains($k, 'baik') || str_contains($k, 'baru') || str_contains($k, 'lengkap') ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-800')));
-        @endphp
-        <!-- Badge Kondisi Fisik -->
-        <span class="px-2.5 py-1 text-xs font-semibold rounded-full {{ $warnaAlat }}">
-            {{ $alat->status_kondisi }}
-        </span>
-
-        <!-- Indikator jika Alat Sedang Dipinjam -->
-        @if($alat->sedang_dipinjam)
-            <span class="px-2 py-0.5 mt-1 text-[10px] font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                Dipinjam ({{ $alat->total_dipinjam_sum_jumlah ?? 0 }} unit)
-            </span>
-        @endif
-    </div>
-</td>
+                        
+                        <!-- Stok Baik / Siap Pinjam -->
                         <td class="py-3 px-4 border-b text-center">
-                    <div class="flex items-center justify-center space-x-2">
-                        <!-- Tombol Edit Selalu Aktif -->
-                        <a href="{{ route('admin.alat.edit', $alat->id) }}"
-                            class="bg-amber-500 hover:bg-amber-600 text-white text-xs px-3 py-1.5 rounded transition">
-                            Edit
-                        </a>
+                            <span class="px-3 py-1 text-xs font-extrabold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                {{ $alat->stok_baik }} unit
+                            </span>
+                        </td>
 
-                        <!-- Logika Tombol Hapus -->
-                        @if($alat->sedang_dipinjam)
-                            <!-- Tombol Hapus Mati (Disabled) jika sedang dipinjam -->
-                            <button type="button" 
-                                    disabled 
-                                    title="Alat tidak dapat dihapus karena sedang dalam transaksi peminjaman aktif" 
-                                    class="bg-gray-300 text-gray-500 cursor-not-allowed text-xs px-3 py-1.5 rounded">
-                                Hapus
-                            </button>
-                        @else
-                            <!-- Tombol Hapus Aktif jika alat aman -->
-                            <form action="{{ route('admin.alat.destroy', $alat->id) }}" method="POST"
-                                onsubmit="return confirm('Apakah Anda yakin ingin menghapus alat ini?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit"
-                                    class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded transition">
-                                    Hapus
-                                </button>
-                            </form>
-                        @endif
-                    </div>
-                </td>
+                        <!-- Rincian Stok Berdasarkan Kondisi -->
+                        <td class="py-3 px-4 border-b text-xs">
+                            <div class="flex flex-wrap justify-center gap-1.5">
+                                @if($alat->stok_rusak_ringan > 0)
+                                    <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold" title="Rusak Ringan">
+                                        RR: {{ $alat->stok_rusak_ringan }}
+                                    </span>
+                                @endif
+
+                                @if($alat->stok_rusak_berat > 0)
+                                    <span class="px-2 py-0.5 rounded bg-orange-100 text-orange-800 font-semibold" title="Rusak Berat">
+                                        RB: {{ $alat->stok_rusak_berat }}
+                                    </span>
+                                @endif
+
+                                @if($alat->stok_hilang > 0)
+                                    <span class="px-2 py-0.5 rounded bg-red-100 text-red-800 font-semibold" title="Hilang">
+                                        Hilang: {{ $alat->stok_hilang }}
+                                    </span>
+                                @endif
+
+                                @if($alat->stok_rusak_ringan == 0 && $alat->stok_rusak_berat == 0 && $alat->stok_hilang == 0)
+                                    <span class="text-gray-400 italic text-[11px]">Semua Baik</span>
+                                @endif
+                            </div>
+                        </td>
+
+                        <td class="py-3 px-4 border-b text-center">
+                            <div class="flex items-center justify-center space-x-2">
+                                <a href="{{ route('admin.alat.edit', $alat->id) }}"
+                                    class="bg-amber-500 hover:bg-amber-600 text-white text-xs px-3 py-1.5 rounded transition font-semibold">
+                                    Edit
+                                </a>
+
+                                @if($alat->sedang_dipinjam)
+                                    <button type="button" 
+                                            disabled 
+                                            title="Alat tidak dapat dihapus karena sedang dalam transaksi peminjaman aktif" 
+                                            class="bg-gray-300 text-gray-500 cursor-not-allowed text-xs px-3 py-1.5 rounded font-semibold">
+                                        Hapus
+                                    </button>
+                                @else
+                                    <form action="{{ route('admin.alat.destroy', $alat->id) }}" method="POST"
+                                        onsubmit="return confirm('Apakah Anda yakin ingin menghapus alat ini?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                            class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded transition font-semibold">
+                                            Hapus
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="py-4 text-center text-gray-500">Belum ada data alat.</td>
+                        <td colspan="6" class="py-6 text-center text-gray-500 text-xs">Belum ada data alat.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 
-    <!-- Pagination -->
-    <div class="p-4 border-t border-gray-200">
+    <div class="p-4 border-t border-gray-200 bg-gray-50">
         {{ $alats->links() }}
     </div>
 </div>

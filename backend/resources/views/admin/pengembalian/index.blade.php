@@ -5,7 +5,7 @@
 
 @section('content')
 
-{{-- Alert Messages --}}
+    {{-- Alert Messages --}}
     @if(session('success'))
         <div class="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-lg shadow-sm text-sm">
             {{ session('success') }}
@@ -17,69 +17,69 @@
         </div>
     @endif
     
-    <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
-        <div class="p-5 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
-            @php 
-            $jmlLaporan = \App\Models\PesanPerbaikan::where('status','terkirim')->count(); 
-            @endphp
-            @if($jmlLaporan > 0)
-
-        <div class="mb-4 bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-lg flex justify-between items-center">
-    <div>⚠️ Ada <b>{{ $jmlLaporan }} laporan perbaikan</b> dari petugas perlu ditindak</div>
-    <a href="{{ route('admin.pesan.index') }}" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded text-sm">Lihat Daftar →</a>
-    </div>
+    {{-- Banner Peringatan Pesan Perbaikan dari Petugas --}}
+    @php 
+        $jmlLaporan = \App\Models\PesanPerbaikan::where('status','terkirim')->count(); 
+    @endphp
+    @if($jmlLaporan > 0)
+        <div class="mb-4 bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-lg flex justify-between items-center text-sm shadow-sm">
+            <div>⚠️ Ada <b>{{ $jmlLaporan }} laporan perbaikan</b> dari petugas perlu ditindaklanjuti.</div>
+            <a href="{{ route('admin.pesan.index') }}" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition">Lihat Daftar &rarr;</a>
+        </div>
     @endif
-            <h3 class="text-lg font-bold text-gray-800">Daftar Pengembalian Alat</h3>
 
-                <!-- Form Search & Filter Tanggal -->
-        <form action="{{ route('admin.pengembalian.index') }}" method="GET" class="flex flex-wrap items-center gap-3 mb-4">
-            <!-- Input Search Nama User / Alat -->
-            <div class="flex-1 min-w-[200px]">
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama peminjam / alat..."
-                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
+        <div class="p-5 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <h3 class="text-lg font-bold text-gray-800 whitespace-nowrap">Daftar Pengembalian Alat</h3>
 
-            <!-- Input Tanggal Mulai -->
-            <div class="flex items-center gap-2">
-                <label class="text-xs font-semibold text-gray-600">Dari:</label>
-                <input type="date" name="tgl_mulai" value="{{ request('tgl_mulai') }}"
-                    class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
+            <!-- Form Search & Filter Tanggal / Kondisi -->
+            <form action="{{ route('admin.pengembalian.index') }}" method="GET" class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+                <!-- Input Search Nama User / Alat -->
+                <div class="w-full md:w-48">
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari peminjam / alat..."
+                        class="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
 
-            <!-- Input Tanggal Selesai -->
-            <div class="flex items-center gap-2">
-                <label class="text-xs font-semibold text-gray-600">Sampai:</label>
-                <input type="date" name="tgl_selesai" value="{{ request('tgl_selesai') }}" min="{{ request('tgl_mulai') ?: date('Y-m-d') }}"
-                    class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
+                <!-- Input Tanggal Dari -->
+                <div class="flex items-center gap-1">
+                    <label class="text-xs font-medium text-gray-600">Dari:</label>
+                    <input type="date" id="admin_tgl_mulai" name="tgl_mulai" value="{{ request('tgl_mulai') }}" onchange="updateMinReturnDateAdmin()"
+                        class="px-2.5 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
 
-            <!-- Filter Status Peminjaman -->
-            <div class="flex items-center gap-2">
-                <label class="text-xs font-semibold text-gray-600">Status:</label>
-                <select name="status" class="text-xs border border-gray-300 rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="" {{ request('status') == '' ? 'selected' : '' }}>Semua</option>
-                    <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Diajukan</option>
-                    <option value="dipinjam" {{ request('status') == 'dipinjam' ? 'selected' : '' }}>Dipinjam</option>
-                    <option value="diproses" {{ request('status') == 'diproses' ? 'selected' : '' }}>Diproses</option>
-                    <option value="dikembalikan" {{ request('status') == 'dikembalikan' ? 'selected' : '' }}>Dikembalikan</option>
-                    <option value="telat" {{ request('status') == 'telat' ? 'selected' : '' }}>Telat</option>
-                </select>
-            </div>
+                <!-- Input Tanggal Sampai (Tanpa default min hari ini agar tanggal lalu bisa dipilih) -->
+                <div class="flex items-center gap-1">
+                    <label class="text-xs font-medium text-gray-600">Sampai:</label>
+                    <input type="date" id="admin_tgl_selesai" name="tgl_selesai" value="{{ request('tgl_selesai') }}" min="{{ request('tgl_mulai') }}"
+                        class="px-2.5 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
 
-            <!-- Tombol Filter & Reset -->
-            <div class="flex items-center gap-2">
-                <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 text-sm font-semibold rounded-lg transition">
-                    Filter
-                </button>
+                <!-- Filter Kondisi Barang -->
+                <div class="flex items-center gap-1">
+                    <label class="text-xs font-medium text-gray-600">Kondisi:</label>
+                    <select name="kondisi" class="text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="" {{ request('kondisi') == '' ? 'selected' : '' }}>Semua Kondisi</option>
+                        <option value="baik" {{ request('kondisi') == 'baik' ? 'selected' : '' }}>Baik / Lengkap</option>
+                        <option value="ringan" {{ request('kondisi') == 'ringan' ? 'selected' : '' }}>Rusak Ringan</option>
+                        <option value="berat" {{ request('kondisi') == 'berat' ? 'selected' : '' }}>Rusak Berat</option>
+                        <option value="hilang" {{ request('kondisi') == 'hilang' ? 'selected' : '' }}>Hilang</option>
+                    </select>
+                </div>
 
-                @if(request('search') || request('tgl_mulai') || request('tgl_selesai'))
-                    <a href="{{ route('admin.pengembalian.index') }}"
-                        class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-3 py-2 text-sm font-semibold rounded-lg transition">
-                        Reset
-                    </a>
-                @endif
-            </div>
-        </form>
+                <!-- Tombol Filter & Reset -->
+                <div class="flex items-center gap-1.5">
+                    <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white px-3.5 py-1.5 text-xs font-semibold rounded-lg transition">
+                        Filter
+                    </button>
+
+                    @if(request('search') || request('tgl_mulai') || request('tgl_selesai') || request('kondisi'))
+                        <a href="{{ route('admin.pengembalian.index') }}"
+                            class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 text-xs font-semibold rounded-lg transition">
+                            Reset
+                        </a>
+                    @endif
+                </div>
+            </form>
         </div>
 
         <div class="overflow-x-auto">
@@ -99,12 +99,12 @@
                     @forelse($pengembalians as $item)
                         <tr class="hover:bg-gray-50 transition">
                             <td class="py-3 px-4 border-b font-medium text-gray-900">
-                                {{ $item->peminjaman->user->name ?? 'N/A' }}
+                                {{ $item->peminjaman->user->name ?? 'User Dihapus' }}
                             </td>
                             <td class="py-3 px-4 border-b">
                                 <ul class="list-disc pl-4 space-y-1 text-xs">
                                     @foreach($item->peminjaman->detailPinjams as $detail)
-                                        <li>{{ $detail->alat->nama_alat ?? 'Alat Dihapus' }} ({{ $detail->jumlah }} unit)</li>
+                                        <li>{{ $detail->alat->nama_alat ?? 'Alat Dihapus' }} <span class="font-bold text-gray-600">({{ $detail->jumlah }} unit)</span></li>
                                     @endforeach
                                 </ul>
                             </td>
@@ -114,7 +114,7 @@
                             <td class="py-3 px-4 border-b">
                                 @php
                                     $k = strtolower($item->kondisi_kembali);
-                                    $warnaKembali = str_contains($k, 'hilang') ? 'bg-red-100 text-red-800' : (str_contains($k, 'berat') ? 'bg-orange-100 text-orange-800' : (str_contains($k, 'ringan') ? 'bg-amber-100 text-amber-800' : (str_contains($k, 'baik') || str_contains($k, 'lengkap') || str_contains($k, 'baru') ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-800')));
+                                    $warnaKembali = str_contains($k, 'hilang') ? 'bg-red-100 text-red-800 border border-red-200' : (str_contains($k, 'berat') ? 'bg-orange-100 text-orange-800 border border-orange-200' : (str_contains($k, 'ringan') ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'));
                                 @endphp
                                 <span class="px-2.5 py-1 text-xs font-semibold rounded-full {{ $warnaKembali }}">
                                     {{ $item->kondisi_kembali }}
@@ -131,20 +131,20 @@
                                 {{ $item->petugas->name ?? 'System' }}
                             </td>
                             <td class="py-3 px-4 border-b text-center">
-                            <form action="{{ route('admin.pengembalian.destroy', $item->id) }}" method="POST">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" 
-                                        onclick="return confirm('Apakah Anda yakin ingin mereset data pengembalian ini?')"
-                                        class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-semibold transition shadow-sm">
-                                    Reset
-                                </button>
-                            </form>
-                        </td>
+                                <form action="{{ route('admin.pengembalian.destroy', $item->id) }}" method="POST">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" 
+                                            onclick="return confirm('Apakah Anda yakin ingin mereset data pengembalian ini?')"
+                                            class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-semibold transition shadow-sm">
+                                        Reset
+                                    </button>
+                                </form>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="py-4 text-center text-gray-500">Belum ada riwayat pengembalian.</td>
+                            <td colspan="7" class="py-6 text-center text-gray-500 text-xs">Tidak ada riwayat pengembalian yang sesuai dengan filter.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -155,4 +155,25 @@
             {{ $pengembalians->links() }}
         </div>
     </div>
+
+    <script>
+        function updateMinReturnDateAdmin() {
+            const tglMulaiInput = document.getElementById('admin_tgl_mulai');
+            const tglSelesaiInput = document.getElementById('admin_tgl_selesai');
+            
+            if (tglMulaiInput && tglSelesaiInput) {
+                const valMulai = tglMulaiInput.value;
+                if (valMulai) {
+                    tglSelesaiInput.min = valMulai;
+                    if (tglSelesaiInput.value && tglSelesaiInput.value < valMulai) {
+                        tglSelesaiInput.value = valMulai;
+                    }
+                } else {
+                    tglSelesaiInput.removeAttribute('min');
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', updateMinReturnDateAdmin);
+    </script>
 @endsection

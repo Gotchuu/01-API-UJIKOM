@@ -33,9 +33,8 @@
                     <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider">
                         <th class="py-3 px-4 border-b">Peminjam</th>
                         <th class="py-3 px-4 border-b">Detail Alat</th>
-                        <th class="py-3 px-4 border-b">Batas Kembalikan</th>
-                        <th class="py-3 px-4 border-b text-center">Status</th>
-                        <th class="py-3 px-4 border-b">Status Peminjaman</th>
+                        <th class="py-3 px-4 border-b">Batas Rencana Kembali</th>
+                        <th class="py-3 px-4 border-b text-center">Status Transaksi</th>
                         <th class="py-3 px-4 border-b text-center">Aksi Verifikasi</th>
                     </tr>
                 </thead>
@@ -52,36 +51,26 @@
                                     @endforeach
                                 </ul>
                             </td>
-                            <td class="py-3 px-4 border-b text-xs">{{ $p->tgl_kembali_plan }}</td>
+                            <td class="py-3 px-4 border-b text-xs font-medium text-gray-700">
+                                {{ \Carbon\Carbon::parse($p->tgl_kembali_plan)->format('d M Y') }}
+                            </td>
                             
                             <!-- Status Dinamis Petugas -->
                             <td class="py-3 px-4 border-b text-center">
                                 @if($p->status == 'diproses')
                                     <span class="px-2.5 py-1 rounded text-xs font-bold bg-amber-100 text-amber-800">Menunggu Cek</span>
-                                @elseif($p->status == 'diproses')
-                                    <span class="px-2.5 py-1 rounded text-xs font-bold bg-purple-100 text-purple-800">Diproses</span>
                                 @elseif($p->status == 'dipinjam')
                                     <span class="px-2.5 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">Dipinjam</span>
                                 @else
-                                    <span class="px-2.5 py-1 rounded text-xs font-bold bg-amber-100 text-amber-800">{{ ucfirst($p->status) }}</span>
+                                    <span class="px-2.5 py-1 rounded text-xs font-bold bg-gray-100 text-gray-800">{{ ucfirst($p->status) }}</span>
                                 @endif
                             </td>
 
                             <td class="py-3 px-4 border-b text-center">
-                                <span class="text-xs font-bold text-gray-700">{{ ucfirst($p->status) }}</span>
-                            </td>
-                            <td class="py-3 px-4 border-b text-center">
-                                <button onclick='openModalProses({{ $p->id }}, @json($p->user->name ?? "N/A"), "{{ date('Y-m-d') }}", @json($p->detailPinjams->map(fn($d) => ($d->alat->nama_alat ?? "Alat Dihapus") . " (" . $d->jumlah . " unit)")->join(", ")))' 
-                                        class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-semibold transition">
-                                    Proses Pengembalian
-                                </button>
-                                @if($p->status == 'diproses')
-                                <form action="{{ route('peminjam.peminjaman.destroy', $p->id) }}" method="POST" class="inline mt-1" onsubmit="return confirm('Batalkan pengajuan pengembalian ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded text-[10px] font-semibold transition">Batalkan</button>
-                                </form>
-                                @endif
+                                <button onclick="openModalProses({{ json_encode($p) }})" 
+        class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-semibold transition shadow-sm">
+        Proses Pengembalian
+    </button>
                             </td>
                         </tr>
                     @empty
@@ -99,22 +88,32 @@
 
     {{-- TABEL 2: HISTORI RIWAYAT PENGEMBALIAN SELESAI --}}
     <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
-        <div class="p-5 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-            <h3 class="text-base font-bold text-gray-800">Riwayat & Pemantauan Pengembalian Selesai</h3>
-            <form action="{{ route('petugas.pengembalian.index') }}" method="GET" class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                <input type="hidden" name="search" value="{{ request('search') }}">
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama..." class="text-xs border rounded px-2 py-1 w-32 focus:outline-none focus:ring-1 focus:ring-emerald-300">
-                <div class="flex items-center gap-1">
-                    <label class="text-xs text-gray-600 whitespace-nowrap">Dari:</label>
-                    <input type="date" name="tgl_mulai" value="{{ request('tgl_mulai') }}" class="text-xs border rounded px-1 py-1 w-28">
+        <div class="p-5 border-b border-gray-200 bg-gray-50 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+            <h3 class="text-base font-bold text-gray-800 whitespace-nowrap">Riwayat & Pemantauan Pengembalian Selesai</h3>
+            
+            <form action="{{ route('petugas.pengembalian.index') }}" method="GET" class="flex flex-wrap md:flex-nowrap items-center gap-2 w-full xl:w-auto">
+                <!-- Search Input Nama Peminjam/Alat -->
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari peminjam / alat..." class="px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-40">
+
+                <div>
+                    <input type="date" id="tgl_mulai" name="tgl_mulai" value="{{ request('tgl_mulai') }}" 
+                        onchange="updateMinDate()"
+                        class="text-xs border border-gray-300 rounded-lg p-1.5 focus:ring-2 focus:ring-blue-500">
                 </div>
-                <div class="flex items-center gap-1">
-                    <label class="text-xs text-gray-600 whitespace-nowrap">Sampai:</label>
-                    <input type="date" name="tgl_selesai" value="{{ request('tgl_selesai') }}" min="{{ request('tgl_mulai') ?: date('Y-m-d') }}" class="text-xs border rounded px-1 py-1 w-28">
+
+                <div>
+                    <input type="date" id="tgl_selesai" name="tgl_selesai" value="{{ request('tgl_selesai') }}" 
+                        class="text-xs border border-gray-300 rounded-lg p-1.5 focus:ring-2 focus:ring-blue-500">
                 </div>
-                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-semibold rounded transition">Filter</button>
-                @if(request('search') || request('tgl_mulai') || request('tgl_selesai'))
-                <a href="{{ route('petugas.pengembalian.index') }}" class="text-xs text-gray-500 hover:text-red-600">✕</a>
+
+                <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition">
+                    Filter
+                </button>
+
+                @if(request('tgl_mulai') || request('tgl_selesai') || request('search'))
+                    <a href="{{ route('petugas.pengembalian.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs px-2.5 py-1.5 rounded-lg font-semibold transition" title="Reset Filter">
+                        Reset
+                    </a>
                 @endif
             </form>
         </div>
@@ -124,7 +123,8 @@
                 <thead>
                     <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider">
                         <th class="py-3 px-4 border-b">Peminjam</th>
-                        <th class="py-3 px-4 border-b">Tanggal Kembali</th>
+                        <th class="py-3 px-4 border-b">Alat yang Dikembalikan</th>
+                        <th class="py-3 px-4 border-b">Tgl Kembali / Tenggat</th>
                         <th class="py-3 px-4 border-b">Kondisi Barang</th>
                         <th class="py-3 px-4 border-b">Denda</th>
                         <th class="py-3 px-4 border-b">Petugas Verifikasi</th>
@@ -133,11 +133,37 @@
                 </thead>
                 <tbody class="text-gray-700 text-sm">
                     @forelse($pengembalians as $item)
-                        <tr class="hover:bg-gray-50 transition">
+                        <tr class="hover:bg-gray-50 transition align-top">
                             <td class="py-3 px-4 border-b font-medium text-gray-900">
                                 {{ $item->peminjaman->user->name ?? 'User Dihapus' }}
                             </td>
-                            <td class="py-3 px-4 border-b text-xs">{{ $item->tgl_kembali }}</td>
+                            <!-- Kolom Alat yang Dikembalikan -->
+                            <td class="py-3 px-4 border-b">
+                                <ul class="list-disc list-inside space-y-0.5 text-xs">
+                                    @if($item->peminjaman && $item->peminjaman->detailPinjams)
+                                        @foreach($item->peminjaman->detailPinjams as $d)
+                                            <li>{{ $d->alat->nama_alat ?? 'Alat Dihapus' }} <span class="font-semibold text-gray-600">({{ $d->jumlah }} unit)</span></li>
+                                        @endforeach
+                                    @else
+                                        <li class="text-gray-400 italic">Data alat tidak ditemukan</li>
+                                    @endif
+                                </ul>
+                            </td>
+                            <td class="py-3 px-4 border-b text-xs">
+                                <div class="font-semibold text-gray-800">{{ \Carbon\Carbon::parse($item->tgl_kembali)->format('d M Y') }}</div>
+                                @if($item->peminjaman)
+                                    @php
+                                        $tglKembali = \Carbon\Carbon::parse($item->tgl_kembali)->startOfDay();
+                                        $tglPlan = \Carbon\Carbon::parse($item->peminjaman->tgl_kembali_plan)->startOfDay();
+                                        $selisihHari = (int) $tglPlan->diffInDays($tglKembali, false);
+                                    @endphp
+                                    @if($selisihHari > 0)
+                                        <div class="text-[10px] text-rose-600 font-bold mt-0.5">(Telat {{ $selisihHari }} hari)</div>
+                                    @else
+                                        <div class="text-[10px] text-emerald-600 font-semibold mt-0.5">(Tepat Waktu)</div>
+                                    @endif
+                                @endif
+                            </td>
                             <td class="py-3 px-4 border-b">
                                 @php
                                     $k = strtolower($item->kondisi_kembali);
@@ -154,14 +180,14 @@
                                 {{ $item->petugas->name ?? 'Sistem' }}
                             </td>
                             <td class="py-3 px-4 border-b text-center">
-                                <button onclick='openPesan({{ $item->id }}, @json($item->peminjaman->user->name ?? "N/A"), @json($item->peminjaman->detailPinjams->map(fn($d) => ($d->alat->nama_alat ?? "Alat Dihapus") . " (" . $d->jumlah . " unit)")->join(", ")))' class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded text-xs font-semibold">
+                                <button onclick='openPesan({{ $item->id }}, @json($item->peminjaman->user->name ?? "N/A"), @json($item->peminjaman && $item->peminjaman->detailPinjams ? $item->peminjaman->detailPinjams->map(fn($d) => ($d->alat->nama_alat ?? "Alat Dihapus") . " (" . $d->jumlah . " unit)")->join(", ") : ""))' class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded text-xs font-semibold shadow-sm transition">
                                     Lapor
                                 </button>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="py-6 text-center text-gray-500 text-xs">Belum ada riwayat pengembalian alat yang selesai.</td>
+                            <td colspan="7" class="py-6 text-center text-gray-500 text-xs">Belum ada riwayat pengembalian alat yang selesai.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -170,60 +196,75 @@
         </div>
     </div>
 
-   {{-- MODAL PROSES PENGEMBALIAN PETUGAS (DILENGKAPI RINCIAN ALAT & KALKULASI DENDA) --}}
-    <div id="modalProses" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-xl w-full max-w-lg shadow-xl border border-gray-100">
-            <div class="flex justify-between items-center border-b border-gray-200 pb-3 mb-4">
-                <h3 class="text-base font-bold text-gray-800">Verifikasi Pengembalian Alat</h3>
-                <button type="button" onclick="closeModalProses()" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
-            </div>
-
-            <p id="prosesPeminjamText" class="text-xs text-gray-600 font-medium mb-3"></p>
-
-            <!-- Box Ringkasan Alat yang Dipinjam -->
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-xs">
-                <div class="font-bold text-blue-900 mb-1">Daftar Barang yang Dikembalikan:</div>
-                <ul id="prosesDetailAlat" class="list-disc list-inside space-y-0.5 text-blue-800"></ul>
+   {{-- MODAL PROSES PENGEMBALIAN PETUGAS (PRESISI SEPERTI ADMIN) --}}
+    <div id="modalProses" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-gray-200 mb-4">
+                <h4 class="text-lg font-bold text-gray-800">Form Pengembalian Alat</h4>
+                <button type="button" onclick="closeModalProses()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
             </div>
 
             <form action="{{ route('petugas.pengembalian.store') }}" method="POST">
                 @csrf
                 <input type="hidden" name="peminjaman_id" id="proses_peminjaman_id">
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Tgl Kembali Real <span class="text-red-500">*</span></label>
-                        <input type="date" name="tgl_kembali" id="proses_tgl_kembali" min="{{ date('Y-m-d') }}" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Kondisi Barang <span class="text-red-500">*</span></label>
-                        <select name="kondisi_kembali" id="proses_kondisi" onchange="toggleDeskripsiKondisi()" required class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                            <option value="Baik & Lengkap">Baik & Lengkap</option>
-                            <option value="Rusak Ringan">Rusak Ringan</option>
-                            <option value="Rusak Berat">Rusak Berat</option>
-                            <option value="Hilang">Hilang</option>
-                        </select>
-                    </div>
+
+                <!-- Nama Peminjam -->
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Nama Peminjam</label>
+                    <input type="text" id="proses_peminjam_name" class="w-full text-sm bg-gray-100 border border-gray-300 rounded-lg p-2.5 text-gray-700 font-semibold focus:outline-none" readonly>
                 </div>
 
-                <div id="proses_wrapper_deskripsi" class="mb-4 hidden">
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Deskripsi Kerusakan / Catatan Kehilangan</label>
+                <!-- Box Daftar Alat yang Dipinjam -->
+                <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-2">Daftar Alat yang Dipinjam:</label>
+                    <ul id="proses_detail_alat_list" class="list-disc pl-5 space-y-1 text-xs text-gray-800"></ul>
+                </div>
+
+                <!-- Tanggal Pengembalian -->
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Tanggal Pengembalian (Real-Time)</label>
+                    <input type="date" name="tgl_kembali" id="proses_tgl_kembali" 
+                        value="{{ date('Y-m-d') }}" 
+                        min="{{ date('Y-m-d') }}" 
+                        max="{{ date('Y-m-d') }}"
+                        onchange="hitungDendaOtomatisPetugas()" 
+                        class="w-full text-sm border border-gray-300 rounded-lg p-2.5 bg-gray-50 focus:ring-blue-500 focus:outline-none" required>
+                    <p class="text-[11px] text-gray-500 mt-1">* Petugas hanya dapat memproses pengembalian barang untuk hari ini.</p>
+                </div>
+
+                <!-- Kondisi Barang -->
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Kondisi Barang</label>
+                    <select name="kondisi_kembali" id="proses_kondisi_kembali" onchange="toggleFormDendaKondisiPetugas()" class="w-full text-sm border border-gray-300 rounded-lg p-2.5 focus:ring-blue-500 focus:outline-none" required>
+                        <option value="Baik / Lengkap">Baik / Lengkap</option>
+                        <option value="Rusak Ringan">Rusak Ringan</option>
+                        <option value="Rusak Berat">Rusak Berat</option>
+                        <option value="Hilang">Hilang</option>
+                    </select>
+                </div>
+
+                <!-- Deskripsi Kerusakan / Catatan Kehilangan -->
+                <div id="wrapper_deskripsi_kondisi_petugas" class="mb-4 hidden">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Deskripsi Kerusakan / Catatan Kehilangan</label>
                     <textarea name="deskripsi_kondisi" id="proses_deskripsi_kondisi" rows="3" placeholder="Jelaskan detail kerusakan atau kronologi kehilangan barang..." class="w-full text-sm border border-gray-300 rounded-lg p-2.5 focus:ring-blue-500 focus:outline-none"></textarea>
                 </div>
 
-                <div class="mb-4">
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Denda Kerusakan / Kerugian (Rp)</label>
-                    <input type="number" name="denda_kondisi" value="0" min="0" placeholder="0" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                    <span class="text-[11px] text-gray-500 mt-1 block">* Denda keterlambatan hari akan dikalkulasi otomatis oleh sistem.</span>
+                <!-- Box Estimasi Denda Telat -->
+                <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900">
+                    <div><strong>Estimasi Denda Telat:</strong> <span id="text_denda_telat_petugas">Rp 0</span></div>
+                    <div class="text-gray-500 mt-0.5">* Tarik denda Rp 1.000 / hari keterlambatan</div>
                 </div>
 
-                <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
-                    <button type="button" onclick="closeModalProses()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold px-4 py-2 rounded-lg text-xs transition">
-                        Batal
-                    </button>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg text-xs transition shadow-sm">
-                        Konfirmasi & Simpan
-                    </button>
+                <!-- Input Denda Kerusakan/Kehilangan -->
+                <div id="wrapper_denda_kondisi_petugas" class="mb-4 hidden">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Denda Kerusakan / Kehilangan (Rp)</label>
+                    <input type="number" name="denda_kondisi" id="proses_denda_kondisi" min="0" value="0" placeholder="Masukkan denda alat" class="w-full text-sm border border-gray-300 rounded-lg p-2.5 focus:ring-blue-500 focus:outline-none">
+                </div>
+
+                <!-- Tombol Aksi -->
+                <div class="flex justify-end gap-2 pt-3 border-t border-gray-200">
+                    <button type="button" onclick="closeModalProses()" class="px-4 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 font-semibold transition">Batal</button>
+                    <button type="submit" class="px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 rounded-lg text-white font-semibold transition shadow-sm">Proses & Simpan</button>
                 </div>
             </form>
         </div>
@@ -257,6 +298,8 @@
     </div>
 
    <script>
+    let tglPlanGlobalPetugas = '';
+
    document.getElementById('proses_tgl_kembali').addEventListener('change', function() {
        const val = this.value;
        const today = new Date().toISOString().split('T')[0];
@@ -280,29 +323,75 @@
        }
    }
 
-   function openModalProses(id, nama, tgl, detail) {
-        document.getElementById('proses_peminjaman_id').value = id;
-        document.getElementById('proses_tgl_kembali').value = tgl;
-        document.getElementById('prosesPeminjamText').innerText = 'Memproses Pengembalian Transaksi #' + id + ' a/n ' + nama;
-        
-        // Render Rincian Alat ke dalam Modal
-        const ul = document.getElementById('prosesDetailAlat');
-        ul.innerHTML = '';
-        if (detail) {
-            detail.split(', ').forEach(a => {
+   // Dipanggil saat tombol 'Proses Pengembalian' di tabel atas diklik
+    function openModalProses(peminjaman) {
+        document.getElementById('proses_peminjaman_id').value = peminjaman.id;
+        document.getElementById('proses_peminjam_name').value = peminjaman.user ? peminjaman.user.name : 'N/A';
+        tglPlanGlobalPetugas = peminjaman.tgl_kembali_plan;
+
+        const listContainer = document.getElementById('proses_detail_alat_list');
+        listContainer.innerHTML = '';
+
+        if (peminjaman.detail_pinjams && peminjaman.detail_pinjams.length > 0) {
+            peminjaman.detail_pinjams.forEach(detail => {
+                const namaAlat = detail.alat ? detail.alat.nama_alat : 'Alat Dihapus';
                 const li = document.createElement('li');
-                li.innerText = a;
-                ul.appendChild(li);
+                li.innerHTML = `<span class="font-semibold text-gray-900">${namaAlat}</span> — <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-[11px] font-bold">${detail.jumlah} unit</span>`;
+                listContainer.appendChild(li);
             });
+        } else {
+            listContainer.innerHTML = '<li class="text-gray-500 italic">Tidak ada rincian alat.</li>';
         }
 
         document.getElementById('modalProses').classList.remove('hidden');
         document.getElementById('modalProses').classList.add('flex');
+        hitungDendaOtomatisPetugas();
+        toggleFormDendaKondisiPetugas();
     }
 
     function closeModalProses() {
         document.getElementById('modalProses').classList.add('hidden');
         document.getElementById('modalProses').classList.remove('flex');
+    }
+
+    function toggleFormDendaKondisiPetugas() {
+        const kondisi = document.getElementById('proses_kondisi_kembali').value;
+        const wrapperDenda = document.getElementById('wrapper_denda_kondisi_petugas');
+        const wrapperDeskripsi = document.getElementById('wrapper_deskripsi_kondisi_petugas');
+        const inputDeskripsi = document.getElementById('proses_deskripsi_kondisi');
+
+        if (kondisi !== 'Baik / Lengkap' && kondisi !== 'Baik & Lengkap') {
+            wrapperDenda.classList.remove('hidden');
+            wrapperDeskripsi.classList.remove('hidden');
+            inputDeskripsi.setAttribute('required', 'required');
+        } else {
+            wrapperDenda.classList.add('hidden');
+            wrapperDeskripsi.classList.add('hidden');
+            document.getElementById('proses_denda_kondisi').value = 0;
+            inputDeskripsi.value = '';
+            inputDeskripsi.removeAttribute('required');
+        }
+    }
+
+    function hitungDendaOtomatisPetugas() {
+        const inputVal = document.getElementById('proses_tgl_kembali').value;
+        if (!inputVal || !tglPlanGlobalPetugas) return;
+
+        const tglKembaliInput = new Date(inputVal);
+        const tglPlan = new Date(tglPlanGlobalPetugas);
+
+        tglKembaliInput.setHours(0, 0, 0, 0);
+        tglPlan.setHours(0, 0, 0, 0);
+
+        const diffTime = tglKembaliInput - tglPlan;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays > 0) {
+            const totalDendaTelat = diffDays * 1000;
+            document.getElementById('text_denda_telat_petugas').innerText = 'Rp ' + totalDendaTelat.toLocaleString('id-ID') + ' (' + diffDays + ' hari keterlambatan)';
+        } else {
+            document.getElementById('text_denda_telat_petugas').innerText = 'Rp 0 (Tepat Waktu)';
+        }
     }
 
     // Modal Lapor Pesan Perbaikan
@@ -311,11 +400,13 @@
         document.getElementById('pesanInfo').innerText = 'Pengembalian ID: #' + id + ' - ' + nama; 
         const ul = document.getElementById('pesanDetailAlat'); 
         ul.innerHTML = ''; 
-        detail.split(', ').forEach(a => { 
-            const li = document.createElement('li'); 
-            li.innerText = a; 
-            ul.appendChild(li); 
-        }); 
+        if (detail) {
+            detail.split(', ').forEach(a => { 
+                const li = document.createElement('li'); 
+                li.innerText = a; 
+                ul.appendChild(li); 
+            }); 
+        }
         document.getElementById('modalPesan').classList.remove('hidden'); 
         document.getElementById('modalPesan').classList.add('flex'); 
     }
@@ -324,5 +415,21 @@
         document.getElementById('modalPesan').classList.add('hidden'); 
         document.getElementById('modalPesan').classList.remove('flex'); 
     }
+
+    function updateMinDate() {
+        const tglMulai = document.getElementById('tgl_mulai').value;
+        const tglSelesaiInput = document.getElementById('tgl_selesai');
+        
+        if (tglMulai) {
+            tglSelesaiInput.min = tglMulai;
+            if (tglSelesaiInput.value && tglSelesaiInput.value < tglMulai) {
+                tglSelesaiInput.value = tglMulai;
+            }
+        } else {
+            tglSelesaiInput.removeAttribute('min');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', updateMinDate);
 </script>
 @endsection

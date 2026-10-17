@@ -24,7 +24,7 @@
             <div class="flex items-center gap-3 w-full md:w-auto">
                 <!-- Form Search -->
                 <form action="{{ route('admin.user.index') }}" method="GET" class="flex w-full md:w-80">
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, email, role..."
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, email, role, alamat..."
                         class="w-full px-3 py-2 text-sm border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 text-sm font-semibold rounded-r-lg transition">
                         Cari
@@ -54,6 +54,7 @@
                         <th class="py-3 px-4 border-b">Email</th>
                         <th class="py-3 px-4 border-b">Role / Hak Akses</th>
                         <th class="py-3 px-4 border-b">No. HP</th>
+                        <th class="py-3 px-4 border-b">Alamat</th>
                         <th class="py-3 px-4 border-b">Status</th>
                         <th class="py-3 px-4 border-b text-center">Aksi</th>
                     </tr>
@@ -82,6 +83,11 @@
                             </td>
                             <td class="py-3 px-4 border-b">{{ $user->no_hp ?? '-' }}</td>
                             
+                            <!-- KOLOM ALAMAT BARU -->
+                            <td class="py-3 px-4 border-b text-xs text-gray-600 max-w-xs truncate" title="{{ $user->alamat }}">
+                                {{ $user->alamat ?? '-' }}
+                            </td>
+
                             <!-- Kolom Status -->
                             <td class="py-3 px-4 border-b">
                                 @if($user->is_active)
@@ -137,7 +143,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="py-4 text-center text-gray-500">Belum ada data pengguna.</td>
+                            <td colspan="8" class="py-4 text-center text-gray-500">Belum ada data pengguna.</td>
                         </tr>
                     @endforelse
                 </tbody>

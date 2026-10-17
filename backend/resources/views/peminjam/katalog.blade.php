@@ -58,13 +58,19 @@
         @csrf
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
             <div class="p-5 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div class="w-full md:w-72">
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Tanggal Pinjam <span class="text-red-500">*</span></label>
-                <input type="date" name="tgl_pinjam" id="tglPinjam" min="{{ date('Y-m-d') }}" value="{{ old('tgl_pinjam', date('Y-m-d')) }}"
-           class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Rencana Tanggal Kembali <span class="text-red-500">*</span></label>
-                    <input type="date" name="tgl_kembali_plan" id="tglKembali" min="{{ date('Y-m-d', strtotime('+1 day')) }}"
-       class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
+                <div class="w-full md:w-72 space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Tanggal Pinjam <span class="text-red-500">*</span></label>
+                        <input type="date" name="tgl_pinjam" id="tglPinjam" min="{{ date('Y-m-d') }}" value="{{ old('tgl_pinjam', date('Y-m-d')) }}"
+                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Rencana Tanggal Kembali <span class="text-red-500">*</span></label>
+                        <!-- PERBAIKAN: Atribut min diubah menjadi minimal sama dengan tgl_pinjam hari ini -->
+                        <input type="date" name="tgl_kembali_plan" id="tglKembali" min="{{ old('tgl_pinjam', date('Y-m-d')) }}" value="{{ old('tgl_kembali_plan', date('Y-m-d')) }}"
+                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
+                    </div>
                 </div>
                 <div class="text-xs text-gray-500">
                     * Centang minimal satu alat yang ingin dipinjam pada tabel di bawah.
@@ -116,10 +122,18 @@
                                     </span>
                                 </td>
                                 <td class="py-3 px-4 border-b text-center">
-                                    <!-- Name input jumlah diubah menggunakan Key ID Alat -->
-                                    <input type="number" name="jumlah[{{ $alat->id }}]" value="1" min="1" max="{{ $alat->stok }}" 
-                                           class="w-full text-center text-sm border border-gray-300 rounded-lg p-1.5 focus:ring-blue-500"
-                                           oninput="if(this.value>{{ $alat->stok }})this.value={{ $alat->stok }};if(this.value<1)this.value=1;">
+                                    <input type="number" 
+                                    name="jumlah[{{ $alat->id }}]" 
+                                    value="1" 
+                                    min="1" 
+                                    max="{{ min($alat->stok, 2) }}" {{-- Batas max adalah stok yang ada ATAU maksimal 2 unit --}}
+                                    class="w-full text-center text-sm border border-gray-300 rounded-lg p-1.5 focus:ring-blue-500"
+                                    oninput="
+                                        let maxVal = {{ min($alat->stok, 2) }};
+                                        if(this.value > maxVal) this.value = maxVal;
+                                        if(this.value < 1) this.value = 1;
+                                    ">
+                                <span class="text-[10px] text-gray-500 block mt-0.5">*Maks 2 unit</span>
                                 </td>
                             </tr>
                         @empty
@@ -149,21 +163,34 @@
     </form>
 
     <script>
-        function validateFormForm() {
-            const checkboxes = document.querySelectorAll('.alat-checkbox:checked');
-            if (checkboxes.length === 0) {
-                alert('Silakan pilih minimal satu alat yang ingin dipinjam dengan mencentang kotak centang!');
-                return false;
-            }
-            return true;
+    function validateFormForm() {
+        const checkboxes = document.querySelectorAll('.alat-checkbox:checked');
+        if (checkboxes.length === 0) {
+            alert('Silakan pilih minimal satu alat yang ingin dipinjam dengan mencentang kotak centang!');
+            return false;
         }
-        document.getElementById('tglPinjam').addEventListener('change', function() {
-    const pinjam = new Date(this.value);
-    pinjam.setDate(pinjam.getDate() + 1);
-    const minKembali = pinjam.toISOString().split('T')[0];
-    const kembali = document.getElementById('tglKembali');
-    kembali.min = minKembali;
-    if (kembali.value && kembali.value < minKembali) kembali.value = minKembali;
-});
-    </script>
+        return true;
+    }
+
+    function updateMinTanggalKembali() {
+        const pinjamInput = document.getElementById('tglPinjam');
+        const kembaliInput = document.getElementById('tglKembali');
+        
+        if (pinjamInput && kembaliInput && pinjamInput.value) {
+            // Set batas minimal tanggal kembali = tanggal pinjam yang dipilih (same day return)
+            kembaliInput.min = pinjamInput.value;
+            
+            // Jika tanggal kembali yang sudah dipilih ternyata lebih awal dari tanggal pinjam baru, samakan nilainya
+            if (kembaliInput.value && kembaliInput.value < pinjamInput.value) {
+                kembaliInput.value = pinjamInput.value;
+            }
+        }
+    }
+
+    // Event saat tanggal pinjam diubah manual oleh user
+    document.getElementById('tglPinjam').addEventListener('change', updateMinTanggalKembali);
+
+    // Jalankan sekali saat DOM selesai dimuat agar batas tanggal langsung tersetting sempurna
+    document.addEventListener('DOMContentLoaded', updateMinTanggalKembali);
+</script>
 @endsection
