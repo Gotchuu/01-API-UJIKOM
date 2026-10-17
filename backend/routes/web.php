@@ -45,6 +45,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     
     Route::put('/peminjaman/{id}/edit-request', [AdminController::class, 'updatePeminjamanRequest'])->name('peminjaman.updateRequest');//Baru
     
+    Route::delete('/peminjaman/detail/{detailId}', [AdminController::class, 'destroyDetailItem'])->name('peminjaman.detail.destroy');
+
     Route::post('/peminjaman', [AdminController::class, 'storePeminjaman'])->name('peminjaman.store');
     Route::put('/peminjaman/{id}/status', [AdminController::class, 'updateStatusPeminjaman'])->name('peminjaman.updateStatus');
 
