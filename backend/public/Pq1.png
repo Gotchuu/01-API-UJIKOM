@@ -1,0 +1,211 @@
+Berikut adalah panduan simulasi dan langkah-langkah *setup* proyek aplikasi peminjaman alat berbasis Laravel 12 dan Docker dari awal hingga siap digunakan di komputer baru.
+
+---
+
+### **Prasyarat Lingkungan di Komputer Baru**
+
+Sebelum mengambil proyek dari GitHub, pastikan komputer tujuan sudah terpasang tools berikut:
+
+1. **WSL 2 (Windows Subsystem for Linux) & Ubuntu**:
+
+
+* Buka PowerShell / CMD (Run as Administrator), lalu jalankan:
+
+
+```bash
+wsl --install
+
+```
+
+
+* Unduh dan pasang **Ubuntu** melalui Microsoft Store.
+
+
+
+
+2. **Docker Desktop**:
+
+
+* Buka Docker Desktop -> **Settings** -> **Resources** -> **WSL integration**.
+
+
+* Aktifkan opsi **Enable integration with my default WSL distro** dan centang **Ubuntu**.
+
+
+
+
+3. **VS Code**:
+
+
+* Pasang ekstensi **WSL** (Remote - WSL) di VS Code.
+
+
+
+
+
+---
+
+### **Langkah Setup Proyek dari GitHub (Step-by-Step)**
+
+#### **1. Clone Repository dari GitHub**
+
+Buka terminal WSL Ubuntu (atau koneksikan VS Code ke WSL Ubuntu), lalu jalankan perintah berikut:
+
+```bash
+# Masuk ke direktori home Ubuntu
+cd ~
+
+# Buat direktori kerja jika belum ada
+mkdir 01.API-UJIKOM && cd 01.API-UJIKOM
+
+# Clone repository dari GitHub ke direktori saat ini
+git clone <URL_REPOSITORY_GITHUB_KAMU> .
+
+```
+
+*Struktur folder proyek setelah di-clone:*
+
+```text
+01.API-UJIKOM/
+├── docker-compose.yml
+└── backend/
+    ├── Dockerfile
+    ├── .env.example
+    ├── vendor/          # (Sudah ada dari commit offline)
+    ├── node_modules/    # (Sudah ada dari commit offline)
+    └── ...
+
+```
+
+---
+
+#### **2. Konfigurasi File Environment (`.env`)**
+
+Masuk ke dalam direktori `backend` dan salin file `.env.example` menjadi `.env`:
+
+```bash
+cd backend
+cp .env.example .env
+
+```
+
+Buka file `.env` dan sesuaikan variabel koneksi database agar selaras dengan konfigurasi di `docker-compose.yml`:
+
+```env
+APP_NAME=Laravel
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://localhost:8000
+
+DB_CONNECTION=mysql
+DB_HOST=mysql-server
+DB_PORT=3306
+DB_DATABASE=API_ujikom
+DB_USERNAME=api_ujikom
+DB_PASSWORD=api_ujikom
+
+```
+
+---
+
+#### **3. Penyesuaian Hak Akses (Permissions)**
+
+Karena direktori `vendor` dan `node_modules` di-commit langsung dari sistem/OS sebelumnya, jalankan perintah ini di WSL untuk memastikan tidak ada kendala *Permission Denied*:
+
+```bash
+# Kembali ke direktori root proyek
+cd ~/01.API-UJIKOM
+
+# Berikan hak akses pengguna pada seluruh file proyek
+sudo chown -R $USER:$USER .
+chmod -R 775 backend/storage backend/bootstrap/cache
+
+```
+
+---
+
+#### **4. Menjalankan Docker Container**
+
+Jalankan Docker Compose dari direktori root (`01.API-UJIKOM`) untuk membangun dan menyalakan layanan `MySQL-API`, `laravel-api`, dan `PhpMyadmin-API`:
+
+```bash
+docker compose up -d
+
+```
+
+*Periksa status container yang sedang berjalan:*
+
+```bash
+docker ps
+
+```
+
+---
+
+#### **5. Inisialisasi Aplikasi Laravel di Dalam Container**
+
+Karena dependensi `vendor` sudah ikut ter-commit, Anda **tidak perlu** menjalankan `composer install`. Cukup jalankan perintah inisialisasi Laravel berikut langsung ke dalam container `laravel-api`:
+
+1. **Generate Application Key:**
+```bash
+docker exec -it laravel-api php artisan key:generate
+
+```
+
+
+2. **Regenerate Autoload Composer (Opsional untuk memastikan pemetaan kelas):**
+```bash
+docker exec -it laravel-api composer dump-autoload
+
+```
+
+
+3. **Jalankan Migrasi Database & Seeder:**
+Perintah ini akan membuat struktur tabel lengkap (`users`, `kategori`, `alat`, `peminjaman`, `detail_pinjam`, `pengembalian`, `log_aktivitas`) sekaligus mengisinya dengan data sampel:
+
+
+```bash
+docker exec -it laravel-api php artisan migrate:fresh --seed
+
+```
+
+
+4. **Buat Symbolic Link untuk Storage Gambar:**
+Menghubungkan direktori `storage/app/public` ke `public/storage` agar aset foto profil dan gambar alat dapat diakses via URL:
+
+
+```bash
+docker exec -it laravel-api php artisan storage:link
+
+```
+
+
+
+---
+
+### **Pemeriksaan & Pengujian Aplikasi**
+
+Setelah seluruh langkah di atas selesai, aplikasi dapat langsung diuji tanpa koneksi internet tambahan:
+
+* **Base URL API Backend:** `http://localhost:8000/api`
+
+* **phpMyAdmin Web UI:** `http://localhost:8081`
+
+* **Kredensial Akun Default (Hasil Seeding):**
+
+* **Admin:** `admin@gmail.com` | Password: `password123`
+
+* **Petugas:** `petugas@gmail.com` | Password: `password123`
+
+* **Peminjam:** `rian@gmail.com` | Password: `password123`
+
+
+
+
+**Pengujian Kunci via Postman:**
+
+1. Kirim `POST http://localhost:8000/api/login` dengan bodi JSON `{"email": "admin@gmail.com", "password": "password123"}`.
+
+
+2. Salin `access_token` yang didapatkan, lalu pasang di tab **Authorization** -> **Bearer Token** untuk mengakses endpoint terproteksi seperti `/api/me` atau `/api/alat`.
