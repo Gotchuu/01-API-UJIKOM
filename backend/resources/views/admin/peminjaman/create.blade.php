@@ -4,6 +4,13 @@
 @section('header-title', 'Form Peminjaman Alat Baru')
 
 @section('content')
+
+@if(session('error'))
+    <div class="mb-4 p-4 rounded-lg bg-red-50 text-red-700 border border-red-200 text-sm">
+        {{ session('error') }}
+    </div>
+@endif
+
     <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div class="p-5 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
             <h3 class="text-lg font-bold text-gray-800">Tambah Peminjaman Alat</h3>
