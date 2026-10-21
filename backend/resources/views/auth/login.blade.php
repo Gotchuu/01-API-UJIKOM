@@ -70,6 +70,11 @@
                     Masuk
                 </button>
             </form>
+
+            <!-- Link Registrasi -->
+            <div class="mt-6 text-center text-xs text-slate-500">
+                Belum memiliki akun? <a href="{{ route('register') }}" class="text-slate-900 font-semibold hover:underline">Daftar di sini</a>
+            </div>
         </div>
 
         <!-- Footer -->
