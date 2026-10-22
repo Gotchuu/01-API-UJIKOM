@@ -166,10 +166,10 @@
                                     @if(in_array($peminjaman->status, ['dikembalikan', 'ditolak']))
                                     <form action="{{ route('admin.peminjaman.destroy', $peminjaman->id) }}" method="POST" onsubmit="return confirm('Yakin menghapus data transaksi ini?')">
                                         @csrf
-                                        @method('DELETE')
+                                        <!--@method('DELETE')
                                         <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold transition w-full shadow-sm">
                                             Hapus
-                                        </button>
+                                        </button> -->
                                     </form>
                                     @endif
                                 </div>

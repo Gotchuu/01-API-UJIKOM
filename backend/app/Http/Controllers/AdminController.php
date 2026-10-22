@@ -574,18 +574,22 @@ class AdminController extends Controller
             }
 
             if ($statusBaru == 'dipinjam' && $statusLama == 'diajukan') {
-                app()->instance('skip_alat_log', true);
+            app()->instance('skip_alat_log', true);
 
-                foreach ($peminjaman->detailPinjams as $detail) {
-                    $alat = Alat::lockForUpdate()->findOrFail($detail->alat_id);
-                    
-                    if ($alat->stok < $detail->jumlah) {
-                        throw new \Exception("Stok alat '{$alat->nama_alat}' tidak mencukupi.");
-                    }
-
-                    $alat->decrement('stok', $detail->jumlah);
+            foreach ($peminjaman->detailPinjams as $detail) {
+                $alat = Alat::lockForUpdate()->findOrFail($detail->alat_id);
+                
+                if ($alat->stok < $detail->jumlah) {
+                    throw new \Exception("Stok alat '{$alat->nama_alat}' tidak mencukupi.");
                 }
+
+                // Kurangi stok total dan stok_baik (stok siap pinjam)
+                $alat->decrement('stok', $detail->jumlah);
+                if (isset($alat->stok_baik)) {
+                    $alat->decrement('stok_baik', $detail->jumlah);
             }
+        }
+    }
 
             $peminjaman->update(['status' => $statusBaru]);
 

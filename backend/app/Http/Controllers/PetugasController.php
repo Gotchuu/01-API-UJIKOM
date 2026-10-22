@@ -62,34 +62,45 @@ class PetugasController extends Controller
      * Menyetujui pengajuan peminjaman awal oleh Petugas
      */
     public function setujuiPeminjaman(Request $request, $id)
-    {
-        try {
-            DB::transaction(function () use ($id) {
-                $peminjaman = Peminjaman::with('detailPinjams.alat')->findOrFail($id);
+{
+    try {
+        DB::transaction(function () use ($id) {
+            $peminjaman = Peminjaman::with('detailPinjams.alat')->findOrFail($id);
 
-                if ($peminjaman->status !== 'diajukan') {
-                    throw new Exception('Peminjaman ini sudah diproses.');
+            if ($peminjaman->status !== 'diajukan') {
+                throw new Exception('Peminjaman ini sudah diproses.');
+            }
+
+            app()->instance('skip_alat_log', true);
+
+            foreach ($peminjaman->detailPinjams as $detail) {
+                $alat = Alat::lockForUpdate()->findOrFail($detail->alat_id);
+                
+                // Gunakan stok_baik jika itu indikator barang yang siap dipinjam
+                $stokTersedia = isset($alat->stok_baik) ? $alat->stok_baik : $alat->stok;
+
+                if ($stokTersedia < $detail->jumlah) {
+                    throw new Exception("Stok alat '{$alat->nama_alat}' tidak mencukupi.");
                 }
 
-                app()->instance('skip_alat_log', true);
+                // Kurangi stok utama
+                $alat->decrement('stok', $detail->jumlah);
 
-                foreach ($peminjaman->detailPinjams as $detail) {
-                    $alat = Alat::lockForUpdate()->findOrFail($detail->alat_id);
-                    if ($alat->stok < $detail->jumlah) {
-                        throw new Exception("Stok alat '{$alat->nama_alat}' tidak mencukupi.");
-                    }
-                    $alat->decrement('stok', $detail->jumlah);
+                // Kurangi stok_baik jika kolomnya ada di database
+                if (isset($alat->stok_baik)) {
+                    $alat->decrement('stok_baik', $detail->jumlah);
                 }
+            }
 
-                $peminjaman->status = 'dipinjam';
-                $peminjaman->save(); 
-            });
+            $peminjaman->status = 'dipinjam';
+            $peminjaman->save(); 
+        });
 
-            return redirect()->back()->with('success', 'Peminjaman berhasil disetujui!');
-        } catch (Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
-        }
+        return redirect()->back()->with('success', 'Peminjaman berhasil disetujui!');
+    } catch (Exception $e) {
+        return redirect()->back()->with('error', $e->getMessage());
     }
+}
 
     /**
      * Menolak Peminjaman
@@ -321,19 +332,22 @@ class PetugasController extends Controller
                 $kondisi = strtolower($request->kondisi_kembali);
 
                 foreach ($peminjaman->detailPinjams as $detail) {
-                    $alat = Alat::lockForUpdate()->find($detail->alat_id);
-                    if ($alat) {
-                        if (str_contains($kondisi, 'hilang')) {
-                            $alat->increment('stok_hilang', $detail->jumlah);
-                        } elseif (str_contains($kondisi, 'berat')) {
-                            $alat->increment('stok_rusak_berat', $detail->jumlah);
-                        } elseif (str_contains($kondisi, 'ringan')) {
-                            $alat->increment('stok_rusak_ringan', $detail->jumlah);
-                        } else {
-                            $alat->increment('stok_baik', $detail->jumlah);
-                        }
+                $alat = Alat::lockForUpdate()->find($detail->alat_id);
+                if ($alat) {
+                    if (str_contains($kondisi, 'hilang')) {
+                        $alat->increment('stok_hilang', $detail->jumlah);
+                    } elseif (str_contains($kondisi, 'berat')) {
+                        $alat->increment('stok_rusak_berat', $detail->jumlah);
+                    } elseif (str_contains($kondisi, 'ringan')) {
+                        $alat->increment('stok_rusak_ringan', $detail->jumlah);
+                        $alat->increment('stok', $detail->jumlah); // Kembalikan ke stok total
+                    } else {
+                        // Jika kondisi Baik/Lengkap
+                        $alat->increment('stok_baik', $detail->jumlah);
+                        $alat->increment('stok', $detail->jumlah); // Kembalikan ke stok total
                     }
                 }
+            }
             });
 
             return redirect()->route('petugas.pengembalian.index')->with('success', 'Pengembalian barang berhasil diverifikasi dan diproses!');
