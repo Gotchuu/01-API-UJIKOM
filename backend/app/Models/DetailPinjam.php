@@ -29,6 +29,6 @@ class DetailPinjam extends Model
 
     public function alat(): BelongsTo
     {
-        return $this->belongsTo(Alat::class);
+        return $this->belongsTo(Alat::class, 'alat_id')->withTrashed();
     }
 }

@@ -93,13 +93,26 @@
 
                             <!-- List Alat -->
                             <td class="py-3 px-4 border-b">
-                                <ul class="list-disc list-inside space-y-1 text-xs">
-                                    @foreach($item->detailPinjams as $detail)
-                                        <li>
-                                            <span class="font-semibold text-gray-900">{{ $detail->alat->nama_alat ?? 'Alat Dihapus' }}</span> 
-                                            <span class="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded text-[10px] font-bold">{{ $detail->jumlah }} unit</span>
-                                        </li>
-                                    @endforeach
+                            <ul class="list-disc list-inside space-y-1 text-xs">
+                                @foreach($item->detailPinjams as $detail)
+                                    <li>
+                                        <!-- Menampilkan nama alat asli -->
+                                        <span class="font-semibold text-gray-900">
+                                            {{ $detail->alat->nama_alat ?? 'Alat Tidak Ditemukan' }}
+                                        </span> 
+
+                                        <!-- Badge penanda jika alat sudah di-soft delete -->
+                                        @if($detail->alat?->trashed())
+                                            <span class="text-[10px] text-red-600 bg-red-100 px-1.5 py-0.5 rounded font-medium">
+                                                (Dihapus/Nonaktif)
+                                            </span>
+                                        @endif
+
+                                        <span class="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                                            {{ $detail->jumlah }} unit
+                                        </span>
+                                    </li>
+                                @endforeach
                                 </ul>
                             </td>
 
